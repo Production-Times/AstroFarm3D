@@ -21,6 +21,12 @@ public class SmoothCameraFollow : MonoBehaviour
     public float maxPitch = 60f;
     public bool lockCursor = false;
 
+    [Header("Mobile Look (optional)")]
+    [Tooltip("On-screen joystick for camera orbit (right stick).")]
+    public MobileJoystick lookJoystick;
+    [Tooltip("Invert vertical look from mobile joystick")]
+    public bool invertMobileLookY = false;
+
     Vector3 currentVelocity;
     float yaw;
     float pitch;
@@ -39,8 +45,16 @@ public class SmoothCameraFollow : MonoBehaviour
 
         if (enableMouseOrbit)
         {
-            yaw += Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-            pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+            float lookX = Input.GetAxis("Mouse X");
+            float lookY = Input.GetAxis("Mouse Y");
+            if (lookJoystick != null)
+            {
+                lookX = lookJoystick.Horizontal;
+                lookY = lookJoystick.Vertical * (invertMobileLookY ? -1f : 1f);
+            }
+
+            yaw += lookX * mouseSensitivity * Time.deltaTime;
+            pitch -= lookY * mouseSensitivity * Time.deltaTime;
             pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
         }
 

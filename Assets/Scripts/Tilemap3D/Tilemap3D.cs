@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [ExecuteAlways]
 public class Tilemap3D : MonoBehaviour
@@ -65,8 +68,28 @@ public class Tilemap3D : MonoBehaviour
         Transform parent = tileParent != null ? tileParent : transform;
         // rotation: respect `usePrefabRotation` or apply configured Euler rotation
         Quaternion rot = usePrefabRotation ? prefab.transform.rotation : Quaternion.Euler(placeRotation);
-        var go = Instantiate(prefab, GetWorldPosition(cell), rot, parent);
-        go.name = prefab.name + string.Format("_({0},{1},{2})", cell.x, cell.y, cell.z);
+        GameObject go;
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            go = PrefabUtility.InstantiatePrefab(prefab, parent) as GameObject;
+            if (go != null)
+            {
+                go.transform.position = GetWorldPosition(cell);
+                go.transform.rotation = rot;
+                Undo.RegisterCreatedObjectUndo(go, "Place Tile");
+            }
+        }
+        else
+#endif
+        {
+            go = Instantiate(prefab, GetWorldPosition(cell), rot, parent);
+        }
+        
+        if (go != null)
+        {
+             go.name = prefab.name + string.Format("_({0},{1},{2})", cell.x, cell.y, cell.z);
+        }
 
         tiles[cell] = go;
         return go;
