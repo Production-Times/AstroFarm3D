@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5404506367410120569}
   m_Layer: 0
   m_Name: Pizza
-  m_TagString: Untagged
+  m_TagString: Crops
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -111,43 +111,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: db446021e9a90b630ac33d9b17d1752b, type: 3}
       propertyPath: m_TagString
-      value: Crops
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: db446021e9a90b630ac33d9b17d1752b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 801261791469769174}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: db446021e9a90b630ac33d9b17d1752b, type: 3}
 --- !u!1 &2757429284573356520 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: db446021e9a90b630ac33d9b17d1752b, type: 3}
   m_PrefabInstance: {fileID: 3063910658850167993}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &801261791469769174
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2757429284573356520}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -8524547844719368960, guid: db446021e9a90b630ac33d9b17d1752b, type: 3}
 --- !u!4 &3246967786692508498 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: db446021e9a90b630ac33d9b17d1752b, type: 3}
@@ -207,7 +182,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a24845294989280289290900e6bb62a0, type: 3}
       propertyPath: m_TagString
-      value: Crops
+      value: Crop
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -216,6 +191,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a24845294989280289290900e6bb62a0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6810344206076869520}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a24845294989280289290900e6bb62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5881207467512167060}
   m_SourcePrefab: {fileID: 100100000, guid: a24845294989280289290900e6bb62a0, type: 3}
 --- !u!1 &3480484064601247455 stripped
 GameObject:
@@ -245,6 +223,26 @@ CapsuleCollider:
   m_Height: 1.6221769
   m_Direction: 1
   m_Center: {x: -0.015896976, y: -0.18968904, z: -0.03431368}
+--- !u!114 &5881207467512167060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3480484064601247455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0622248ea263f8c03a06fdaf02210a09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  collectiblePrefab: {fileID: 2906853584008530765, guid: 39c4d75c54d5e111fa325e64ec6f45ce, type: 3}
+  spawnForce: 5
+  growthMesh: {fileID: 2757429284573356520}
+  hitParticles: {fileID: 19826678, guid: c05e92eaee7a00844867e5edc8e0dde1, type: 3}
+  shakeIntensity: 0.2
+  shakeDuration: 0.1
+  hitParticleSystemScale: 5
 --- !u!4 &4253361210785223781 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a24845294989280289290900e6bb62a0, type: 3}
