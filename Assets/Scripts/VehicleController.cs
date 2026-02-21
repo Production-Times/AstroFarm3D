@@ -70,11 +70,11 @@ public class VehicleController : MonoBehaviour
     public bool debugLogJoystickInput = false;
     
     [Header("Reverse Prevention (Hypercasual)")]
-    [Tooltip("Minimum downward joystick value to engage reverse (-1 to 0). More negative = harder to reverse. Recommended: -0.95 for hypercasual.")]
-    [Range(-1f, -0.5f)] public float reverseEngageThreshold = -0.95f;
-    [Tooltip("Joystick value above which to exit reverse and return to forward. Recommended: -0.3 for smooth transition.")]
-    [Range(-0.5f, 0f)] public float reverseExitThreshold = -0.3f;
-    [Tooltip("Maximum allowed horizontal input when engaging reverse. Above this, reverse is blocked. 0 = must be straight down, 1 = any angle allowed.")]
+    [Tooltip("Threshold for engaging reverse (after inversion). Must push hard in reverse direction. Range 0-1 where 1=hardest. Recommended: 0.95 for hypercasual.")]
+    [Range(0.5f, 1f)] public float reverseEngageThreshold = 0.95f;
+    [Tooltip("Threshold for exiting reverse back to forward (after inversion). Range 0-1. Recommended: 0.3 for smooth transition.")]
+    [Range(0f, 0.5f)] public float reverseExitThreshold = 0.3f;
+    [Tooltip("Maximum allowed horizontal input when engaging reverse. Above this, reverse is blocked. 0 = must be straight, 1 = any angle allowed.")]
     [Range(0f, 1f)] public float reverseHorizontalTolerance = 0.3f;
     [Tooltip("If true, reverse is completely disabled (vehicle only moves forward).")]
     public bool disableReverse = false;
@@ -227,22 +227,28 @@ public class VehicleController : MonoBehaviour
 
             // Override Logic:
             // HYPERCASUAL REVERSE PREVENTION:
-            // 1. Only allow reverse if joystick is pulled ALMOST STRAIGHT DOWN (within horizontal tolerance)
-            // 2. Require very strong downward input (reverseEngageThreshold, default -0.95)
-            // 3. Once in reverse, need to return stick past reverseExitThreshold to go forward again
-            // 4. This prevents accidental reverse when turning at diagonal angles
+            // After invertJoystickVertical: positive throttle = forward, negative throttle = reverse
+            // GOAL: Default to FORWARD. Only reverse with intentional strong negative input.
             
             bool isReverseAllowed = !disableReverse;
-            bool isStraightDown = Mathf.Abs(steer) <= reverseHorizontalTolerance;
+            bool isTurning = Mathf.Abs(steer) > reverseHorizontalTolerance;
             
-            if (isReverseAllowed && throttle < reverseEngageThreshold && isStraightDown) 
+            // Convert thresholds to negative values for comparison
+            float reverseThreshold = -reverseEngageThreshold;  // e.g., -0.95
+            float forwardThreshold = -reverseExitThreshold;    // e.g., -0.3
+            
+            // PRIORITY 1: Always go forward if throttle is not strongly negative
+            if (throttle > forwardThreshold)
             {
-                currentDirectionState = -1f;
+                currentDirectionState = 1f; // Forward
             }
-            else if (throttle > reverseExitThreshold)
+            // PRIORITY 2: Only engage reverse if throttle is VERY negative AND not turning
+            else if (isReverseAllowed && throttle < reverseThreshold && !isTurning) 
             {
-                currentDirectionState = 1f;
+                currentDirectionState = -1f; // Reverse
             }
+            // PRIORITY 3: In hysteresis zone (-0.95 to -0.3), maintain current state
+            // This prevents flickering but defaults to forward on first input
 
             // Apply direction
             if (currentDirectionState < 0f)

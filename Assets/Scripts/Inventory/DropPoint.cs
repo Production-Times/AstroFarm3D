@@ -184,6 +184,9 @@ namespace Inventory
             if (item == null || targetConveyorBelt == null)
                 return;
             
+            item.OnConveyorBeltProcessing();
+            item.transform.SetParent(targetConveyorBelt.transform);
+            
             storedItems.Remove(item);
             
             targetConveyorBelt.AddItemToBelt(item);

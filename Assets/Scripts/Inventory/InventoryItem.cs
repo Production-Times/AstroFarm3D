@@ -162,6 +162,8 @@ namespace Inventory
         private Rigidbody rb;
         private Collider[] colliders;
         private int originalLayer;
+        private float dropCooldownTimer = 0f;
+        private const float DROP_COOLDOWN = 0.5f;
         
         private void Awake()
         {
@@ -170,6 +172,24 @@ namespace Inventory
             originalLayer = gameObject.layer;
             
             ApplyPhysicsSettings(GetSettingsForState(currentState));
+        }
+        
+        private void Update()
+        {
+            if (dropCooldownTimer > 0f)
+            {
+                dropCooldownTimer -= Time.deltaTime;
+            }
+        }
+        
+        public bool CanBePickedUp()
+        {
+            return dropCooldownTimer <= 0f;
+        }
+        
+        public void StartDropCooldown()
+        {
+            dropCooldownTimer = DROP_COOLDOWN;
         }
         
         public ItemState GetCurrentState()
@@ -275,6 +295,7 @@ namespace Inventory
                        currentState == ItemState.ProcessingMachineLoading ||
                        currentState == ItemState.ProcessingMachineProcessing ||
                        currentState == ItemState.ProcessingMachineUnloading ||
+                       currentState == ItemState.VacuumCaptured ||
                        currentState == ItemState.Selling);
         }
         

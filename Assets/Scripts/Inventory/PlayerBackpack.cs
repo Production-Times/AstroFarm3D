@@ -24,6 +24,10 @@ namespace Inventory
         [Header("Drop Point Detection")]
         public float dropPointRange = 2f;
         public bool autoDropAtDropPoints = true;
+        public bool excludeVehicleDropPoints = true;
+        
+        [Header("Debug")]
+        public bool debugPickupChecks = true;
         
         [Header("Events")]
         public UnityEvent<int> onInventoryChanged;
@@ -32,6 +36,10 @@ namespace Inventory
         private List<InventoryItem> stack = new List<InventoryItem>();
         private Collider[] hitColliders = new Collider[20];
         private DropPoint nearestDropPoint;
+        private HashSet<InventoryItem> attractedItems = new HashSet<InventoryItem>();
+        private StorageTransferPad nearbyTransferPad;
+        private float transferPadCheckTimer = 0f;
+        private const float TRANSFER_PAD_CHECK_INTERVAL = 0.2f;
         
         private void Awake()
         {
@@ -46,8 +54,10 @@ namespace Inventory
         
         private void Update()
         {
-            // Vacuum pickup
-            if (stack.Count < maxCapacity)
+            CheckForNearbyTransferPad();
+            
+            // Vacuum pickup - DISABLED when on transfer pad
+            if (stack.Count < maxCapacity && nearbyTransferPad == null)
             {
                 PerformVacuum();
             }
@@ -59,9 +69,37 @@ namespace Inventory
             }
         }
         
+        private void CheckForNearbyTransferPad()
+        {
+            transferPadCheckTimer += Time.deltaTime;
+            
+            if (transferPadCheckTimer >= TRANSFER_PAD_CHECK_INTERVAL)
+            {
+                transferPadCheckTimer = 0f;
+                
+                StorageTransferPad[] transferPads = FindObjectsByType<StorageTransferPad>(FindObjectsSortMode.None);
+                nearbyTransferPad = null;
+                
+                foreach (var pad in transferPads)
+                {
+                    if (pad != null)
+                    {
+                        float distance = Vector3.Distance(transform.position, pad.transform.position);
+                        if (distance < pickupRange + 1f)
+                        {
+                            nearbyTransferPad = pad;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
         private void PerformVacuum()
         {
             int numColliders = Physics.OverlapSphereNonAlloc(transform.position, pickupRange, hitColliders, itemLayerMask);
+            
+            HashSet<InventoryItem> currentFrameItems = new HashSet<InventoryItem>();
             
             for (int i = 0; i < numColliders; i++)
             {
@@ -74,17 +112,32 @@ namespace Inventory
                     item = col.GetComponentInParent<InventoryItem>();
                 }
 
-                if (item != null && CanPickupItem(item))
+                if (item != null)
                 {
-                    float distToBackpack = Vector3.Distance(backpackSlot.position, item.transform.position);
-
-                    if (distToBackpack <= collectionDistance)
+                    currentFrameItems.Add(item);
+                    
+                    if (CanPickupItem(item))
                     {
-                        AddToStack(item);
+                        float distToBackpack = Vector3.Distance(backpackSlot.position, item.transform.position);
+
+                        if (distToBackpack <= collectionDistance)
+                        {
+                            AddToStack(item);
+                            attractedItems.Remove(item);
+                        }
+                        else
+                        {
+                            AttractItem(item, backpackSlot.position);
+                            attractedItems.Add(item);
+                        }
                     }
                     else
                     {
-                        AttractItem(item, backpackSlot.position);
+                        if (attractedItems.Contains(item))
+                        {
+                            ReleaseItem(item);
+                            attractedItems.Remove(item);
+                        }
                     }
                 }
                 else
@@ -130,6 +183,9 @@ namespace Inventory
         
         private void AttractItem(InventoryItem item, Vector3 targetPosition)
         {
+            if (!CanPickupItem(item))
+                return;
+            
             // Make collider a trigger to avoid physics collisions with player
             Collider col = item.GetComponent<Collider>();
             if (col != null && !col.isTrigger)
@@ -150,35 +206,80 @@ namespace Inventory
             item.transform.position = Vector3.MoveTowards(item.transform.position, targetPosition, attractionSpeed * Time.deltaTime);
         }
         
+        private void ReleaseItem(InventoryItem item)
+        {
+            if (item == null)
+                return;
+            
+            ItemState currentState = item.GetCurrentState();
+            item.SetState(currentState);
+            
+            if (debugPickupChecks)
+            {
+                Debug.Log($"[PlayerBackpack] Released item {item.name} back to state {currentState}");
+            }
+        }
+        
         private bool CanPickupItem(InventoryItem item)
         {
             if (item == null)
                 return false;
             
-            if (item.isBeingCarried)
+            if (!item.CanBePickedUp())
+            {
+                if (debugPickupChecks)
+                    Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: Drop cooldown active");
                 return false;
+            }
+            
+            if (item.isBeingCarried)
+            {
+                if (debugPickupChecks)
+                    Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: isBeingCarried = true");
+                return false;
+            }
             
             if (item.isPlaced)
+            {
+                if (debugPickupChecks)
+                    Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: isPlaced = true, State = {item.GetCurrentState()}");
                 return false;
+            }
             
             if (item.transform.parent != null)
             {
                 DropPoint dropPoint = item.transform.parent.GetComponent<DropPoint>();
                 if (dropPoint != null)
+                {
+                    if (debugPickupChecks)
+                        Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: parented to DropPoint ({dropPoint.name})");
                     return false;
+                }
                 
                 ConveyorBelt conveyorBelt = item.transform.parent.GetComponent<ConveyorBelt>();
                 if (conveyorBelt != null)
+                {
+                    if (debugPickupChecks)
+                        Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: parented to ConveyorBelt ({conveyorBelt.name})");
                     return false;
+                }
                 
                 ProcessingMachine processingMachine = item.transform.parent.GetComponent<ProcessingMachine>();
                 if (processingMachine != null)
+                {
+                    if (debugPickupChecks)
+                        Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: parented to ProcessingMachine ({processingMachine.name})");
                     return false;
+                }
             }
             
             ItemState currentState = item.GetCurrentState();
             if (currentState != ItemState.Free && currentState != ItemState.TractorUnloaded)
+            {
+                if (debugPickupChecks)
+                    Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: Invalid state = {currentState}");
                 return false;
+            }
             
             return true;
         }
@@ -283,6 +384,11 @@ namespace Inventory
             
             foreach (var dropPoint in dropPoints)
             {
+                if (excludeVehicleDropPoints && dropPoint is VehicleDropPoint)
+                {
+                    continue;
+                }
+                
                 float distance = Vector3.Distance(transform.position, dropPoint.transform.position);
                 if (distance < closestDistance)
                 {
@@ -328,6 +434,22 @@ namespace Inventory
         public DropPoint GetNearestDropPoint()
         {
             return nearestDropPoint;
+        }
+        
+        public List<InventoryItem> GetBackpackItems()
+        {
+            return new List<InventoryItem>(stack);
+        }
+        
+        public bool RemoveItemFromBackpack(InventoryItem item)
+        {
+            if (stack.Contains(item))
+            {
+                stack.Remove(item);
+                onInventoryChanged?.Invoke(stack.Count);
+                return true;
+            }
+            return false;
         }
         
         private void OnDrawGizmosSelected()

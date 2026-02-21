@@ -860,11 +860,11 @@ MonoBehaviour:
     initialLocalRotation: {x: 0, y: 0, z: 0, w: 0}
     spinAngle: 0
     currentSteerAngle: 0
-  maxMotorForce: 1500
+  maxMotorForce: 1200
   maxSteerAngle: 30
-  maxSpeed: 5.5
+  maxSpeed: 3
   brakeStrength: 8
-  steerResponsiveness: 100
+  steerResponsiveness: 25
   throttleAxis: Vertical
   steerAxis: Horizontal
   brakeButton: Fire1
@@ -877,8 +877,8 @@ MonoBehaviour:
   invertJoystickVertical: 1
   steerFallbackMinMagnitude: 0.2
   debugLogJoystickInput: 0
-  reverseEngageThreshold: -0.95
-  reverseExitThreshold: -0.3
+  reverseEngageThreshold: 0.5
+  reverseExitThreshold: 0
   reverseHorizontalTolerance: 0.3
   disableReverse: 0
   debugShowForward: 1

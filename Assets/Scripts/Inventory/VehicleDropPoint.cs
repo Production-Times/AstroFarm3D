@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 namespace Inventory
 {
@@ -67,6 +68,21 @@ namespace Inventory
         public bool IsVehicleInRange()
         {
             return vehicleInRange;
+        }
+        
+        public List<InventoryItem> GetStoredItems()
+        {
+            return new List<InventoryItem>(storedItems);
+        }
+        
+        public InventoryItem RemoveItem(InventoryItem item)
+        {
+            if (storedItems.Contains(item))
+            {
+                storedItems.Remove(item);
+                return item;
+            }
+            return null;
         }
         
         private void OnTriggerEnter(Collider other)

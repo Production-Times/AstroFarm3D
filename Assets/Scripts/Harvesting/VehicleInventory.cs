@@ -117,25 +117,71 @@ namespace Harvesting
             Transform targetLocation = dropLocation != null ? dropLocation : transform;
             Debug.Log($"VehicleInventory: Dropping {stack.Count} items at {targetLocation.name} (position: {targetLocation.position})");
             
-            for (int i = 0; i < stack.Count; i++)
+            Inventory.VehicleDropPoint vehicleDropPoint = targetLocation.GetComponent<Inventory.VehicleDropPoint>();
+            
+            if (vehicleDropPoint != null)
             {
-                var item = stack[i];
-                if (item != null)
+                for (int i = 0; i < stack.Count; i++)
                 {
-                    item.transform.SetParent(null);
-                    
-                    Vector3 dropOffset = new Vector3(
-                        (i % 3) * 1.5f - 1.5f,
-                        0.5f,
-                        (i / 3) * 1.5f
-                    );
-                    
-                    item.transform.position = targetLocation.position + dropOffset;
-                    item.transform.rotation = Quaternion.identity;
-                    
-                    item.EnablePhysics();
-                    
-                    Debug.Log($"VehicleInventory: Dropped '{item.name}' at position {item.transform.position}");
+                    var collectible = stack[i];
+                    if (collectible != null)
+                    {
+                        Inventory.InventoryItem inventoryItem = collectible.GetComponent<Inventory.InventoryItem>();
+                        
+                        if (inventoryItem != null)
+                        {
+                            Transform dropTransform = vehicleDropPoint.dropPointTransform != null ? vehicleDropPoint.dropPointTransform : vehicleDropPoint.transform;
+                            
+                            Vector3 localGridPos = vehicleDropPoint.stackSettings.GetStackPosition(i);
+                            Vector3 worldPos = dropTransform.TransformPoint(localGridPos);
+                            
+                            collectible.transform.SetParent(null);
+                            collectible.transform.position = worldPos;
+                            collectible.transform.rotation = dropTransform.rotation;
+                            
+                            collectible.EnablePhysics();
+                            inventoryItem.OnDropped();
+                            
+                            Debug.Log($"VehicleInventory: Placed '{collectible.name}' at grid position {worldPos} (local: {localGridPos}, index {i})");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"VehicleInventory: {collectible.name} has no InventoryItem component!");
+                            collectible.transform.SetParent(null);
+                            collectible.transform.position = targetLocation.position + new Vector3((i % 3) * 1.5f - 1.5f, 0.5f, (i / 3) * 1.5f);
+                            collectible.EnablePhysics();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < stack.Count; i++)
+                {
+                    var item = stack[i];
+                    if (item != null)
+                    {
+                        item.transform.SetParent(null);
+                        
+                        Vector3 dropOffset = new Vector3(
+                            (i % 3) * 1.5f - 1.5f,
+                            0.5f,
+                            (i / 3) * 1.5f
+                        );
+                        
+                        item.transform.position = targetLocation.position + dropOffset;
+                        item.transform.rotation = Quaternion.identity;
+                        
+                        item.EnablePhysics();
+                        
+                        Inventory.InventoryItem inventoryItem = item.GetComponent<Inventory.InventoryItem>();
+                        if (inventoryItem != null)
+                        {
+                            inventoryItem.OnDropped();
+                        }
+                        
+                        Debug.Log($"VehicleInventory: Dropped '{item.name}' at position {item.transform.position}");
+                    }
                 }
             }
             
