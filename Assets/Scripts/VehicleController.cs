@@ -48,10 +48,10 @@ public class VehicleController : MonoBehaviour
     public float steerResponsiveness = 4f;  // lerp speed for visual tyre steer
 
     [Header("Input")]
-    public string throttleAxis = "Vertical"; // forward/back
-    public string steerAxis = "Horizontal";  // left/right
-    public string brakeButton = "Fire1";     // optional brake button
-    public bool useRigidbodyPhysics = true;    // toggle physics (Rigidbody) vs transform kinematic
+    public string throttleAxis = "Vertical";
+    public string steerAxis = "Horizontal";
+    public string brakeButton = "Fire1";
+    public bool useRigidbodyPhysics = true;
     [Tooltip("Optional: dynamic joystick spawner for input (uses its ActiveJoystick). If assigned, joystick input overrides axes.")]
     public DynamicJoystickSpawner moveJoystickSpawner;
     [Tooltip("Optional: drag-and-drop a DynamicJoystick directly here.")]
@@ -68,6 +68,16 @@ public class VehicleController : MonoBehaviour
     public float steerFallbackMinMagnitude = 0.2f;
     [Tooltip("When true, log joystick inputs each FixedUpdate for debugging.")]
     public bool debugLogJoystickInput = false;
+    
+    [Header("Reverse Prevention (Hypercasual)")]
+    [Tooltip("Minimum downward joystick value to engage reverse (-1 to 0). More negative = harder to reverse. Recommended: -0.95 for hypercasual.")]
+    [Range(-1f, -0.5f)] public float reverseEngageThreshold = -0.95f;
+    [Tooltip("Joystick value above which to exit reverse and return to forward. Recommended: -0.3 for smooth transition.")]
+    [Range(-0.5f, 0f)] public float reverseExitThreshold = -0.3f;
+    [Tooltip("Maximum allowed horizontal input when engaging reverse. Above this, reverse is blocked. 0 = must be straight down, 1 = any angle allowed.")]
+    [Range(0f, 1f)] public float reverseHorizontalTolerance = 0.3f;
+    [Tooltip("If true, reverse is completely disabled (vehicle only moves forward).")]
+    public bool disableReverse = false;
 
     [Header("Debug")]
     [Tooltip("Show vehicle forward direction gizmo in Scene view.")]
@@ -142,7 +152,7 @@ public class VehicleController : MonoBehaviour
 
             if (debugLogJoystickInput)
             {
-                Debug.Log($"Vehicle joystick input (Spawner) — H:{steer:F2} V:{throttle:F2} Mag:{j.Magnitude:F2}");
+                Debug.Log($"Vehicle joystick input (Spawner) — H:{steer:F2} V:{throttle:F2} Mag:{j.Magnitude:F2} Dir:{(currentDirectionState > 0 ? "FWD" : "REV")}");
             }
         }
         else if (dynamicJoystick != null)
@@ -150,10 +160,9 @@ public class VehicleController : MonoBehaviour
             throttle = dynamicJoystick.Vertical;
             steer = dynamicJoystick.Horizontal;
             
-            
             if (debugLogJoystickInput)
             {
-                Debug.Log($"Vehicle joystick input (Direct) — H:{steer:F2} V:{throttle:F2} Mag:{dynamicJoystick.Magnitude:F2}");
+                Debug.Log($"Vehicle joystick input (Direct) — H:{steer:F2} V:{throttle:F2} Mag:{dynamicJoystick.Magnitude:F2} Dir:{(currentDirectionState > 0 ? "FWD" : "REV")}");
             }
         }
         else if (moveStaticJoystick != null)
@@ -217,21 +226,23 @@ public class VehicleController : MonoBehaviour
             float targetSpeed = moveMag * maxSpeed;
 
             // Override Logic:
-            // "If turning don't switch to reverse until I release the joystick or take it fully down"
-            // Start Reverse (Enter -1 state) ONLY if stick is FULLY pulled back (> 90%).
-            // Otherwise, stay in current state (Forward).
-            // Exit Reverse ONLY if stick returns to near-neutral (> -0.1).
+            // HYPERCASUAL REVERSE PREVENTION:
+            // 1. Only allow reverse if joystick is pulled ALMOST STRAIGHT DOWN (within horizontal tolerance)
+            // 2. Require very strong downward input (reverseEngageThreshold, default -0.95)
+            // 3. Once in reverse, need to return stick past reverseExitThreshold to go forward again
+            // 4. This prevents accidental reverse when turning at diagonal angles
             
-            if (throttle < -0.9f) 
+            bool isReverseAllowed = !disableReverse;
+            bool isStraightDown = Mathf.Abs(steer) <= reverseHorizontalTolerance;
+            
+            if (isReverseAllowed && throttle < reverseEngageThreshold && isStraightDown) 
             {
-                currentDirectionState = -1f; // Reverse (Hard engage)
+                currentDirectionState = -1f;
             }
-            else if (throttle > -0.1f)
+            else if (throttle > reverseExitThreshold)
             {
-                currentDirectionState = 1f; // Forward (Default)
+                currentDirectionState = 1f;
             }
-            // Else: Keep current state (Hysteresis zone -0.9 to -0.1)
-            // e.g. Turning with Stick at (-0.7, 0.7) will stay Forward.
 
             // Apply direction
             if (currentDirectionState < 0f)

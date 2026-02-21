@@ -55,6 +55,17 @@ MonoBehaviour:
   vacuumLayers:
     serializedVersion: 2
     m_Bits: 64
+  dropLocation: {fileID: 0}
+  autoDropOnExit: 1
+  onInventoryChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onInventoryFull:
+    m_PersistentCalls:
+      m_Calls: []
+  onInventoryDropped:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!65 &3380138261909987958
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -751,7 +762,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4989404913889537831}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 100
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -866,6 +877,10 @@ MonoBehaviour:
   invertJoystickVertical: 1
   steerFallbackMinMagnitude: 0.2
   debugLogJoystickInput: 0
+  reverseEngageThreshold: -0.95
+  reverseExitThreshold: -0.3
+  reverseHorizontalTolerance: 0.3
+  disableReverse: 0
   debugShowForward: 1
   debugShowTyreGizmos: 1
   previewRotate: 0

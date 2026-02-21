@@ -43,6 +43,12 @@ public class DriveArea : MonoBehaviour
     public bool invertSpawnRotation = false;
     [Tooltip("If true, always spawn vehicle facing forward (ignoring vehicleSpawnPoint and player rotation). If false, uses vehicleSpawnPoint rotation or player rotation.")]
     public bool useDefaultForwardRotation = false;
+    
+    [Header("Inventory Drop")]
+    [Tooltip("Optional VehicleDropPoint where the vehicle should drop its items when exiting the drive area. If not set, will auto-detect in the scene.")]
+    public Transform vehicleDropPoint;
+    
+    private Inventory.VehicleDropPoint cachedDropPoint;
 
     // runtime
     GameObject spawnedVehicle;
@@ -178,6 +184,22 @@ public class DriveArea : MonoBehaviour
                 Debug.Log($"DriveArea: wired DynamicJoystickSpawner '{assignedJoystickSpawner.name}' into spawned vehicle.");
             }
         }
+        
+        // Setup vehicle inventory drop location
+        var vehicleInventory = spawnedVehicle.GetComponentInChildren<Harvesting.VehicleInventory>();
+        if (vehicleInventory != null)
+        {
+            Transform dropTarget = GetVehicleDropLocation();
+            if (dropTarget != null)
+            {
+                vehicleInventory.dropLocation = dropTarget;
+                Debug.Log($"DriveArea: assigned vehicle drop location to '{dropTarget.name}'.");
+            }
+            else
+            {
+                Debug.LogWarning("DriveArea: No VehicleDropPoint found in scene. Items will drop at vehicle position.");
+            }
+        }
     }
 
     void OnDrawGizmos()
@@ -208,6 +230,14 @@ public class DriveArea : MonoBehaviour
         if (isSpawnedVehicle)
         {
             Debug.Log("DriveArea: spawned vehicle exited area, dismounting.", this);
+            
+            // Drop vehicle inventory items before destroying the vehicle
+            var vehicleInventory = spawnedVehicle.GetComponentInChildren<Harvesting.VehicleInventory>();
+            if (vehicleInventory != null)
+            {
+                vehicleInventory.DropAllItems();
+            }
+            
             // Optionally respawn the playerPrefab at the configured respawn point or at the vehicle exit position
             if (playerPrefab != null)
             {
@@ -261,6 +291,31 @@ public class DriveArea : MonoBehaviour
         }
     }
 
+    private Transform GetVehicleDropLocation()
+    {
+        // Use manually assigned drop point if available
+        if (vehicleDropPoint != null)
+        {
+            return vehicleDropPoint;
+        }
+        
+        // Auto-detect VehicleDropPoint in the scene
+        if (cachedDropPoint == null)
+        {
+            cachedDropPoint = FindAnyObjectByType<Inventory.VehicleDropPoint>();
+        }
+        
+        if (cachedDropPoint != null)
+        {
+            // Use the unloadPosition if set, otherwise use the dropPoint transform itself
+            return cachedDropPoint.unloadPosition != null 
+                ? cachedDropPoint.unloadPosition 
+                : cachedDropPoint.transform;
+        }
+        
+        return null;
+    }
+    
     // Optional API to forcibly dismount and restore player
     public void DismountPlayer()
     {

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections.Generic;
 
 namespace Harvesting
@@ -24,12 +25,20 @@ namespace Harvesting
         public float collectionDistance = 0.5f;
 
         [Tooltip("Layers to include in the vacuum check.")]
-        public LayerMask vacuumLayers = -1; // Default to Everything
+        public LayerMask vacuumLayers = -1;
+        
+        [Header("Drop Settings")]
+        public Transform dropLocation;
+        public bool autoDropOnExit = false;
+        
+        [Header("Events")]
+        public UnityEvent<int> onInventoryChanged;
+        public UnityEvent onInventoryFull;
+        public UnityEvent onInventoryDropped;
 
         private List<Collectible> stack = new List<Collectible>();
         
-        // References
-        private Collider[] hitColliders = new Collider[20]; // Buffer for overlap sphere
+        private Collider[] hitColliders = new Collider[20];
 
         private void Update()
         {
@@ -76,23 +85,73 @@ namespace Harvesting
 
         private void AddToStack(Collectible item)
         {
-            if (stack.Count >= maxCapacity) return;
+            if (stack.Count >= maxCapacity)
+            {
+                onInventoryFull?.Invoke();
+                return;
+            }
 
             item.OnCollected();
             stack.Add(item);
 
-            // Parent to trunk
             item.transform.SetParent(trunkPoint);
             
-            // Calculate position in stack
             Vector3 targetPos = CalculateStackPosition(stack.Count - 1);
             
-            // Animate to position (simple snap for now, can be tweened)
             item.transform.localPosition = targetPos;
             item.transform.localRotation = Quaternion.identity;
 
-            // Visual Juice: Squash and Stretch
             StartCoroutine(SquashAndStretch(item.transform));
+            
+            onInventoryChanged?.Invoke(stack.Count);
+        }
+        
+        public void DropAllItems()
+        {
+            if (stack.Count == 0)
+            {
+                Debug.Log("VehicleInventory: No items to drop.");
+                return;
+            }
+            
+            Transform targetLocation = dropLocation != null ? dropLocation : transform;
+            Debug.Log($"VehicleInventory: Dropping {stack.Count} items at {targetLocation.name} (position: {targetLocation.position})");
+            
+            for (int i = 0; i < stack.Count; i++)
+            {
+                var item = stack[i];
+                if (item != null)
+                {
+                    item.transform.SetParent(null);
+                    
+                    Vector3 dropOffset = new Vector3(
+                        (i % 3) * 1.5f - 1.5f,
+                        0.5f,
+                        (i / 3) * 1.5f
+                    );
+                    
+                    item.transform.position = targetLocation.position + dropOffset;
+                    item.transform.rotation = Quaternion.identity;
+                    
+                    item.EnablePhysics();
+                    
+                    Debug.Log($"VehicleInventory: Dropped '{item.name}' at position {item.transform.position}");
+                }
+            }
+            
+            stack.Clear();
+            onInventoryDropped?.Invoke();
+            onInventoryChanged?.Invoke(0);
+        }
+        
+        public int GetItemCount()
+        {
+            return stack.Count;
+        }
+        
+        public bool IsFull()
+        {
+            return stack.Count >= maxCapacity;
         }
 
         private Vector3 CalculateStackPosition(int index)
