@@ -8323,6 +8323,8 @@ MonoBehaviour:
   startPoint: {fileID: 1460441825}
   endPoint: {fileID: 1354993084}
   conveyorSpeed: 2
+  minimumItemSpacing: 0.15
+  enforceSpacing: 1
   processesItems: 1
   processingParticlePrefab: {fileID: 2837609728858217907, guid: 30538aa757d5768459b127b9b70d4362, type: 3}
   particleOffset: {x: 0, y: 0, z: 0}
@@ -15701,12 +15703,13 @@ MonoBehaviour:
   stackSettings:
     stackMode: 1
     verticalSpacing: {x: 0, y: 0.5, z: 0}
-    gridDimensions: {x: 2, y: 1}
-    gridSpacing: {x: 0.5, y: 0.5, z: 0.5}
+    gridDimensions: {x: 3, y: 3}
+    gridSpacing: {x: 0.4, y: 0.4, z: 0.4}
   placementParticlePrefab: {fileID: 2837609728858217907, guid: 30538aa757d5768459b127b9b70d4362, type: 3}
   particleOffset: {x: 0, y: 0, z: 0}
   sendToConveyorBelt: 1
   targetConveyorBelt: {fileID: 534132965}
+  conveyorSendDelay: 1.5
   onItemPlaced:
     m_PersistentCalls:
       m_Calls: []
@@ -29588,6 +29591,7 @@ MonoBehaviour:
   particleOffset: {x: 0, y: 0, z: 0}
   sendToConveyorBelt: 0
   targetConveyorBelt: {fileID: 0}
+  conveyorSendDelay: 1.5
   onItemPlaced:
     m_PersistentCalls:
       m_Calls: []

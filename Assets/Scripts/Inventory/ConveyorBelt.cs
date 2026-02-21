@@ -11,6 +11,11 @@ namespace Inventory
         public Transform endPoint;
         public float conveyorSpeed = 2f;
         
+        [Header("Item Spacing")]
+        [Tooltip("Minimum progress difference between items (0.0 to 1.0). 0.15 = 15% of belt length")]
+        public float minimumItemSpacing = 0.2f;
+        public bool enforceSpacing = true;
+        
         [Header("Processing")]
         public bool processesItems = true;
         public GameObject processingParticlePrefab;
@@ -74,7 +79,15 @@ namespace Inventory
         public void AddItemToBelt(InventoryItem item)
         {
             if (item == null)
+            {
+                Debug.LogWarning("Attempted to add null item to conveyor belt");
                 return;
+            }
+            
+            if (enforceSpacing && !CanAcceptItem())
+            {
+                return;
+            }
             
             ConveyorItemData data = new ConveyorItemData
             {
@@ -90,6 +103,19 @@ namespace Inventory
             item.OnConveyorBeltProcessing();
             
             onItemEntered?.Invoke(item);
+        }
+        
+        public bool CanAcceptItem()
+        {
+            if (!enforceSpacing)
+                return true;
+            
+            if (itemsOnBelt.Count == 0)
+                return true;
+            
+            ConveyorItemData lastItem = itemsOnBelt[itemsOnBelt.Count - 1];
+            
+            return lastItem.progress >= minimumItemSpacing;
         }
         
         private void ProcessItem(ConveyorItemData data)
@@ -190,7 +216,20 @@ namespace Inventory
                 Gizmos.color = Color.yellow;
                 Vector3 midPoint = Vector3.Lerp(startPoint.position, endPoint.position, 0.5f);
                 Gizmos.DrawWireSphere(midPoint, 0.2f);
+                
+                if (enforceSpacing && minimumItemSpacing > 0)
+                {
+                    Gizmos.color = Color.cyan;
+                    Vector3 spacingPoint = Vector3.Lerp(startPoint.position, endPoint.position, minimumItemSpacing);
+                    Gizmos.DrawWireSphere(spacingPoint, 0.15f);
+                    Gizmos.DrawLine(startPoint.position, spacingPoint);
+                }
             }
+        }
+        
+        public int GetItemCount()
+        {
+            return itemsOnBelt.Count;
         }
     }
 }

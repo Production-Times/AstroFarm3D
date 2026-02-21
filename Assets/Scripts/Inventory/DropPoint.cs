@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Inventory
@@ -27,6 +28,7 @@ namespace Inventory
         [Header("Conveyor Belt Processing")]
         public bool sendToConveyorBelt = false;
         public ConveyorBelt targetConveyorBelt;
+        public float conveyorSendDelay = 1.5f;
         
         [Header("Custom Events")]
         public UnityEvent<InventoryItem> onItemPlaced;
@@ -34,6 +36,8 @@ namespace Inventory
         public UnityEvent onCapacityReached;
         
         protected List<InventoryItem> storedItems = new List<InventoryItem>();
+        private Queue<InventoryItem> conveyorQueue = new Queue<InventoryItem>();
+        private bool isSendingToConveyor = false;
         
         protected virtual void Awake()
         {
@@ -82,7 +86,7 @@ namespace Inventory
             
             if (sendToConveyorBelt && targetConveyorBelt != null)
             {
-                SendItemToConveyor(item);
+                QueueItemForConveyor(item);
             }
             
             return true;
@@ -126,6 +130,55 @@ namespace Inventory
             }
         }
         
+        protected virtual void QueueItemForConveyor(InventoryItem item)
+        {
+            if (item == null || targetConveyorBelt == null)
+                return;
+            
+            conveyorQueue.Enqueue(item);
+            
+            if (!isSendingToConveyor)
+            {
+                StartCoroutine(ProcessConveyorQueue());
+            }
+        }
+        
+        protected virtual IEnumerator ProcessConveyorQueue()
+        {
+            isSendingToConveyor = true;
+            
+            while (conveyorQueue.Count > 0)
+            {
+                InventoryItem item = conveyorQueue.Peek();
+                
+                if (item == null)
+                {
+                    conveyorQueue.Dequeue();
+                    continue;
+                }
+                
+                if (!storedItems.Contains(item))
+                {
+                    conveyorQueue.Dequeue();
+                    continue;
+                }
+                
+                if (targetConveyorBelt != null && targetConveyorBelt.CanAcceptItem())
+                {
+                    conveyorQueue.Dequeue();
+                    SendItemToConveyor(item);
+                    
+                    yield return new WaitForSeconds(conveyorSendDelay);
+                }
+                else
+                {
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            
+            isSendingToConveyor = false;
+        }
+        
         protected virtual void SendItemToConveyor(InventoryItem item)
         {
             if (item == null || targetConveyorBelt == null)
@@ -140,11 +193,55 @@ namespace Inventory
         
         protected virtual void RefreshStackPositions()
         {
-            for (int i = 0; i < storedItems.Count; i++)
+            for (int i = storedItems.Count - 1; i >= 0; i--)
             {
+                if (storedItems[i] == null)
+                {
+                    storedItems.RemoveAt(i);
+                    continue;
+                }
+                
                 Vector3 localPos = stackSettings.GetStackPosition(i);
                 storedItems[i].transform.localPosition = localPos;
             }
+        }
+        
+        public virtual void SendAllItemsToConveyor()
+        {
+            if (!sendToConveyorBelt || targetConveyorBelt == null)
+                return;
+            
+            List<InventoryItem> itemsToQueue = new List<InventoryItem>(storedItems);
+            
+            foreach (var item in itemsToQueue)
+            {
+                if (item != null && !conveyorQueue.Contains(item))
+                {
+                    conveyorQueue.Enqueue(item);
+                }
+            }
+            
+            if (!isSendingToConveyor && conveyorQueue.Count > 0)
+            {
+                StartCoroutine(ProcessConveyorQueue());
+            }
+        }
+        
+        public virtual void StopSendingToConveyor()
+        {
+            conveyorQueue.Clear();
+            StopAllCoroutines();
+            isSendingToConveyor = false;
+        }
+        
+        public virtual int GetConveyorQueueCount()
+        {
+            return conveyorQueue.Count;
+        }
+        
+        public virtual bool IsSendingToConveyor()
+        {
+            return isSendingToConveyor;
         }
         
         protected virtual void SpawnPlacementParticle(Vector3 worldPosition)

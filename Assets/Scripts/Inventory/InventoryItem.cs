@@ -269,7 +269,13 @@ namespace Inventory
         private void UpdateLegacyFlags()
         {
             isBeingCarried = (currentState == ItemState.PlayerCarried || currentState == ItemState.PlayerBagAttached);
-            isPlaced = (currentState == ItemState.DropPointPlaced || currentState == ItemState.DeliveryPoint);
+            isPlaced = (currentState == ItemState.DropPointPlaced || 
+                       currentState == ItemState.DeliveryPoint ||
+                       currentState == ItemState.ConveyorBeltProcessing ||
+                       currentState == ItemState.ProcessingMachineLoading ||
+                       currentState == ItemState.ProcessingMachineProcessing ||
+                       currentState == ItemState.ProcessingMachineUnloading ||
+                       currentState == ItemState.Selling);
         }
         
         public void SetPhysicsEnabled(bool enabled)

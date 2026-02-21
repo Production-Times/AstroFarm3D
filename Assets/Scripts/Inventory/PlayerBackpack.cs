@@ -74,7 +74,7 @@ namespace Inventory
                     item = col.GetComponentInParent<InventoryItem>();
                 }
 
-                if (item != null && !item.isBeingCarried && !item.isPlaced)
+                if (item != null && CanPickupItem(item))
                 {
                     float distToBackpack = Vector3.Distance(backpackSlot.position, item.transform.position);
 
@@ -148,6 +148,39 @@ namespace Inventory
             
             // Move item towards backpack
             item.transform.position = Vector3.MoveTowards(item.transform.position, targetPosition, attractionSpeed * Time.deltaTime);
+        }
+        
+        private bool CanPickupItem(InventoryItem item)
+        {
+            if (item == null)
+                return false;
+            
+            if (item.isBeingCarried)
+                return false;
+            
+            if (item.isPlaced)
+                return false;
+            
+            if (item.transform.parent != null)
+            {
+                DropPoint dropPoint = item.transform.parent.GetComponent<DropPoint>();
+                if (dropPoint != null)
+                    return false;
+                
+                ConveyorBelt conveyorBelt = item.transform.parent.GetComponent<ConveyorBelt>();
+                if (conveyorBelt != null)
+                    return false;
+                
+                ProcessingMachine processingMachine = item.transform.parent.GetComponent<ProcessingMachine>();
+                if (processingMachine != null)
+                    return false;
+            }
+            
+            ItemState currentState = item.GetCurrentState();
+            if (currentState != ItemState.Free && currentState != ItemState.TractorUnloaded)
+                return false;
+            
+            return true;
         }
         
         private void AddToStack(InventoryItem item)
