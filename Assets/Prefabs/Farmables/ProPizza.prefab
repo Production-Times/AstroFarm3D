@@ -301,7 +301,7 @@ MonoBehaviour:
   isBeingCarried: 0
   freeState:
     useGravity: 1
-    isKinematic: 0
+    isKinematic: 1
     constraints: 0
     collisionDetection: 0
     mass: 1

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Processed_B
   m_EditorClassIdentifier: 
   itemName: Basic Pizza
-  prefab: {fileID: 2906853584008530765, guid: ebc024f05ffc5c74194d97cef83c91ab, type: 3}
+  prefab: {fileID: 4459161947023280124, guid: 083a0e5d972c60028a6c59ac8bba054f, type: 3}
   icon: {fileID: 21300000, guid: 80012b5d5fe144f79941a58dae2295cd, type: 3}
   hasValue: 1
   value: 10

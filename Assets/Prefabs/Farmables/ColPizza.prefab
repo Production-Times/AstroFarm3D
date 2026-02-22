@@ -172,7 +172,7 @@ MonoBehaviour:
     isKinematic: 0
     constraints: 0
     collisionDetection: 0
-    mass: 1
+    mass: 1000
     drag: 0
     angularDrag: 0.05
     collidersEnabled: 1

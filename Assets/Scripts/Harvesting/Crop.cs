@@ -98,7 +98,7 @@ namespace Harvesting
             }
             
             // Destroy the crop object after a delay or immediately if we just want to pool it
-            Destroy(gameObject, 2f); // Give time for particles to finish or just cleanup
+            Destroy(gameObject, 0.001f); // Give time for particles to finish or just cleanup
         }
     }
 }
