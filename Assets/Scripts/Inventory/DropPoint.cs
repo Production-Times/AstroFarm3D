@@ -271,6 +271,11 @@ namespace Inventory
             return new List<InventoryItem>(storedItems);
         }
         
+        public int GetStoredItemCount()
+        {
+            return storedItems.Count;
+        }
+        
         private void OnDrawGizmosSelected()
         {
             Transform point = dropPointTransform != null ? dropPointTransform : transform;

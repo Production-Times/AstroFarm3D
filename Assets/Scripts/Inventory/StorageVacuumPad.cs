@@ -275,6 +275,56 @@ namespace Inventory
             isActive = active;
         }
         
+        public bool AddItemDirectly(InventoryItem item)
+        {
+            if (item == null || item.itemData == null)
+                return false;
+            
+            if (IsFull())
+                return false;
+            
+            if (!acceptAllItems && !acceptedItemTypes.Contains(item.itemData))
+                return false;
+            
+            storedItems.Add(item);
+            
+            item.transform.SetParent(transform);
+            Vector3 localPos = stackSettings.GetStackPosition(storedItems.Count - 1);
+            item.transform.localPosition = localPos;
+            item.transform.localRotation = Quaternion.identity;
+            
+            Rigidbody rb = item.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+                rb.useGravity = false;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+            
+            Collider col = item.GetComponent<Collider>();
+            if (col != null)
+            {
+                col.enabled = false;
+            }
+            
+            item.OnPlaced();
+            
+            if (collectParticlePrefab != null)
+            {
+                Instantiate(collectParticlePrefab, item.transform.position + particleOffset, Quaternion.identity);
+            }
+            
+            onItemStored?.Invoke(item);
+            
+            if (IsFull())
+            {
+                onStorageFull?.Invoke();
+            }
+            
+            return true;
+        }
+        
         private void SetPadColor(Color color)
         {
             if (padMaterial != null)

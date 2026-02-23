@@ -10,12 +10,16 @@ namespace Inventory
         public Transform unloadPosition;
         public bool autoUnloadOnExit = true;
         
+        [Header("Auto Storage Settings")]
+        public bool skipVehicleDropPoint = false;
+        
         [Header("Vehicle Events")]
         public UnityEvent onVehicleEntered;
         public UnityEvent onVehicleExited;
         public UnityEvent onUnloadComplete;
         
         private bool vehicleInRange = false;
+        private StorageSystemManager storageSystemManager;
         
         private void Awake()
         {
@@ -27,6 +31,16 @@ namespace Inventory
                 unloadObj.transform.SetParent(transform);
                 unloadObj.transform.localPosition = Vector3.forward * 2f;
                 unloadPosition = unloadObj.transform;
+            }
+        }
+        
+        private void Start()
+        {
+            storageSystemManager = FindFirstObjectByType<StorageSystemManager>();
+            
+            if (skipVehicleDropPoint && storageSystemManager == null)
+            {
+                Debug.LogWarning("[VehicleDropPoint] Skip Vehicle Drop Point is enabled, but no StorageSystemManager found in the scene!");
             }
         }
         
@@ -42,7 +56,14 @@ namespace Inventory
             
             if (autoUnloadOnExit && storedItems.Count > 0)
             {
-                UnloadAllItems();
+                if (skipVehicleDropPoint && storageSystemManager != null)
+                {
+                    TransferItemsDirectlyToStorage();
+                }
+                else
+                {
+                    UnloadAllItems();
+                }
             }
             
             onVehicleExited?.Invoke();
@@ -83,6 +104,25 @@ namespace Inventory
                 return item;
             }
             return null;
+        }
+        
+        private void TransferItemsDirectlyToStorage()
+        {
+            if (storageSystemManager == null || storedItems.Count == 0)
+                return;
+            
+            List<InventoryItem> itemsToTransfer = new List<InventoryItem>(storedItems);
+            storedItems.Clear();
+            
+            foreach (var item in itemsToTransfer)
+            {
+                if (item != null)
+                {
+                    storageSystemManager.TransferItemToStorage(item);
+                }
+            }
+            
+            onUnloadComplete?.Invoke();
         }
         
         private void OnTriggerEnter(Collider other)

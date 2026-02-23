@@ -9,6 +9,7 @@ namespace Inventory
         [Header("References")]
         public StorageTransferPad transferPad;
         public List<StorageVacuumPad> storagePads = new List<StorageVacuumPad>();
+        public DropPoint storageDropPoint;
         
         [Header("Statistics")]
         public bool showDebugInfo = true;
@@ -169,6 +170,55 @@ namespace Inventory
             }
             
             return report;
+        }
+        
+        public bool TransferItemToStorage(InventoryItem item)
+        {
+            if (item == null || item.itemData == null)
+                return false;
+            
+            DropPoint targetStorage = GetStorageDropPoint();
+            
+            if (targetStorage == null)
+            {
+                Debug.LogWarning($"[StorageSystemManager] No storage drop point available for item: {item.itemData.itemName}");
+                return false;
+            }
+            
+            bool success = targetStorage.TryPlaceItem(item);
+            
+            if (!success)
+            {
+                Debug.LogWarning($"[StorageSystemManager] Failed to add item {item.itemData.itemName} to storage. Storage may be full or item not accepted.");
+            }
+            else
+            {
+                Debug.Log($"[StorageSystemManager] Successfully transferred {item.itemData.itemName} to storage.");
+            }
+            
+            return success;
+        }
+        
+        private DropPoint GetStorageDropPoint()
+        {
+            if (storageDropPoint != null)
+            {
+                return storageDropPoint;
+            }
+            
+            if (transferPad != null && transferPad.storageDropPoint != null)
+            {
+                storageDropPoint = transferPad.storageDropPoint;
+                return storageDropPoint;
+            }
+            
+            StorageVacuumPad firstPad = storagePads.Count > 0 ? storagePads[0] : null;
+            if (firstPad != null)
+            {
+                Debug.LogWarning("[StorageSystemManager] Using deprecated StorageVacuumPad. Consider updating to use storageDropPoint.");
+            }
+            
+            return null;
         }
         
         private void CheckAllStorageFull()

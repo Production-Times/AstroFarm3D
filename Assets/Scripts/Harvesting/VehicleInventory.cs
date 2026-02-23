@@ -119,40 +119,50 @@ namespace Harvesting
             
             Inventory.VehicleDropPoint vehicleDropPoint = targetLocation.GetComponent<Inventory.VehicleDropPoint>();
             
-            if (vehicleDropPoint != null)
+            if (vehicleDropPoint != null && vehicleDropPoint.skipVehicleDropPoint)
             {
-                for (int i = 0; i < stack.Count; i++)
+                Inventory.StorageSystemManager storageManager = FindFirstObjectByType<Inventory.StorageSystemManager>();
+                
+                if (storageManager != null)
                 {
-                    var collectible = stack[i];
-                    if (collectible != null)
+                    Debug.Log($"VehicleInventory: Skipping drop point, transferring {stack.Count} items directly to storage.");
+                    
+                    for (int i = 0; i < stack.Count; i++)
                     {
-                        Inventory.InventoryItem inventoryItem = collectible.GetComponent<Inventory.InventoryItem>();
-                        
-                        if (inventoryItem != null)
+                        var collectible = stack[i];
+                        if (collectible != null)
                         {
-                            Transform dropTransform = vehicleDropPoint.dropPointTransform != null ? vehicleDropPoint.dropPointTransform : vehicleDropPoint.transform;
+                            Inventory.InventoryItem inventoryItem = collectible.GetComponent<Inventory.InventoryItem>();
                             
-                            Vector3 localGridPos = vehicleDropPoint.stackSettings.GetStackPosition(i);
-                            Vector3 worldPos = dropTransform.TransformPoint(localGridPos);
-                            
-                            collectible.transform.SetParent(null);
-                            collectible.transform.position = worldPos;
-                            collectible.transform.rotation = dropTransform.rotation;
-                            
-                            collectible.EnablePhysics();
-                            inventoryItem.OnDropped();
-                            
-                            Debug.Log($"VehicleInventory: Placed '{collectible.name}' at grid position {worldPos} (local: {localGridPos}, index {i})");
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"VehicleInventory: {collectible.name} has no InventoryItem component!");
-                            collectible.transform.SetParent(null);
-                            collectible.transform.position = targetLocation.position + new Vector3((i % 3) * 1.5f - 1.5f, 0.5f, (i / 3) * 1.5f);
-                            collectible.EnablePhysics();
+                            if (inventoryItem != null)
+                            {
+                                collectible.transform.SetParent(null);
+                                bool success = storageManager.TransferItemToStorage(inventoryItem);
+                                
+                                if (success)
+                                {
+                                    Debug.Log($"VehicleInventory: Transferred '{collectible.name}' directly to storage.");
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"VehicleInventory: Failed to transfer '{collectible.name}' to storage. Dropping at vehicle position.");
+                                    collectible.transform.position = targetLocation.position + new Vector3((i % 3) * 1.5f - 1.5f, 0.5f, (i / 3) * 1.5f);
+                                    collectible.EnablePhysics();
+                                    inventoryItem.OnDropped();
+                                }
+                            }
                         }
                     }
                 }
+                else
+                {
+                    Debug.LogWarning("VehicleInventory: Skip Vehicle Drop Point enabled but no StorageSystemManager found. Falling back to normal drop.");
+                    DropItemsNormally(vehicleDropPoint, targetLocation);
+                }
+            }
+            else if (vehicleDropPoint != null)
+            {
+                DropItemsNormally(vehicleDropPoint, targetLocation);
             }
             else
             {
@@ -188,6 +198,42 @@ namespace Harvesting
             stack.Clear();
             onInventoryDropped?.Invoke();
             onInventoryChanged?.Invoke(0);
+        }
+        
+        private void DropItemsNormally(Inventory.VehicleDropPoint vehicleDropPoint, Transform targetLocation)
+        {
+            for (int i = 0; i < stack.Count; i++)
+            {
+                var collectible = stack[i];
+                if (collectible != null)
+                {
+                    Inventory.InventoryItem inventoryItem = collectible.GetComponent<Inventory.InventoryItem>();
+                    
+                    if (inventoryItem != null)
+                    {
+                        Transform dropTransform = vehicleDropPoint.dropPointTransform != null ? vehicleDropPoint.dropPointTransform : vehicleDropPoint.transform;
+                        
+                        Vector3 localGridPos = vehicleDropPoint.stackSettings.GetStackPosition(i);
+                        Vector3 worldPos = dropTransform.TransformPoint(localGridPos);
+                        
+                        collectible.transform.SetParent(null);
+                        collectible.transform.position = worldPos;
+                        collectible.transform.rotation = dropTransform.rotation;
+                        
+                        collectible.EnablePhysics();
+                        inventoryItem.OnDropped();
+                        
+                        Debug.Log($"VehicleInventory: Placed '{collectible.name}' at grid position {worldPos} (local: {localGridPos}, index {i})");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"VehicleInventory: {collectible.name} has no InventoryItem component!");
+                        collectible.transform.SetParent(null);
+                        collectible.transform.position = targetLocation.position + new Vector3((i % 3) * 1.5f - 1.5f, 0.5f, (i / 3) * 1.5f);
+                        collectible.EnablePhysics();
+                    }
+                }
+            }
         }
         
         public int GetItemCount()
