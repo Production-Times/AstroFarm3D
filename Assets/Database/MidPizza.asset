@@ -16,6 +16,6 @@ MonoBehaviour:
   prefab: {fileID: 4459161947023280124, guid: a0cdc9dc5f4fe4e918ed3a3f3fa1b936, type: 3}
   icon: {fileID: 21300000, guid: 80012b5d5fe144f79941a58dae2295cd, type: 3}
   hasValue: 1
-  value: 10
+  value: 50
   canBeProcessed: 0
   processedResult: {fileID: 0}

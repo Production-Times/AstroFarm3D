@@ -10,6 +10,8 @@ namespace Harvesting
         [Tooltip("Point where the stack begins.")]
         public Transform trunkPoint;
         [Tooltip("Maximum number of items.")]
+        public int baseMaxCapacity = 40;
+        [HideInInspector]
         public int maxCapacity = 40;
         [Tooltip("Spacing between items in the stack.")]
         public Vector3 itemSpacing = new Vector3(0.5f, 0.5f, 0.5f);
@@ -18,6 +20,8 @@ namespace Harvesting
         
         [Header("Vacuum Settings")]
         [Tooltip("Radius to attract collectibles.")]
+        public float baseVacuumRadius = 6.0f;
+        [HideInInspector]
         public float vacuumRadius = 6.0f;
         [Tooltip("Force/Speed at which collectibles are pulled.")]
         public float vacuumSpeed = 15f;
@@ -39,6 +43,28 @@ namespace Harvesting
         private List<Collectible> stack = new List<Collectible>();
         
         private Collider[] hitColliders = new Collider[20];
+        
+        private void Awake()
+        {
+            ApplyUpgrades();
+        }
+        
+        public void ApplyUpgrades()
+        {
+            if (Inventory.UpgradeManager.Instance != null && Inventory.UpgradeManager.Instance.upgradeDatabase != null)
+            {
+                float upgradedRadius = Inventory.UpgradeManager.Instance.GetUpgradeValue(Inventory.UpgradeType.VehicleVacuumRadius);
+                int upgradedCapacity = Mathf.RoundToInt(Inventory.UpgradeManager.Instance.GetUpgradeValue(Inventory.UpgradeType.VehicleMaxCapacity));
+                
+                vacuumRadius = upgradedRadius > 0 ? upgradedRadius : baseVacuumRadius;
+                maxCapacity = upgradedCapacity > 0 ? upgradedCapacity : baseMaxCapacity;
+            }
+            else
+            {
+                vacuumRadius = baseVacuumRadius;
+                maxCapacity = baseMaxCapacity;
+            }
+        }
 
         private void Update()
         {

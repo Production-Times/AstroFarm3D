@@ -8,6 +8,8 @@ namespace Inventory
     {
         [Header("Backpack Settings")]
         public Transform backpackSlot;
+        public int baseMaxCapacity = 10;
+        [HideInInspector]
         public int maxCapacity = 10;
         public float pickupRange = 3f;
         public float attractionSpeed = 8f;
@@ -49,6 +51,28 @@ namespace Inventory
                 slot.transform.SetParent(transform);
                 slot.transform.localPosition = new Vector3(0, 1.5f, -0.5f);
                 backpackSlot = slot.transform;
+            }
+            
+            ApplyUpgrade();
+        }
+        
+        public void ApplyUpgrade()
+        {
+            if (UpgradeManager.Instance != null && UpgradeManager.Instance.upgradeDatabase != null)
+            {
+                int upgradedCapacity = Mathf.RoundToInt(UpgradeManager.Instance.GetUpgradeValue(UpgradeType.PlayerBackpackCapacity));
+                if (upgradedCapacity > 0)
+                {
+                    maxCapacity = upgradedCapacity;
+                }
+                else
+                {
+                    maxCapacity = baseMaxCapacity;
+                }
+            }
+            else
+            {
+                maxCapacity = baseMaxCapacity;
             }
         }
         

@@ -406,6 +406,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfd9e280350e8f43390a71b30fa26f82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  baseMoveSpeed: 2
   moveSpeed: 7
   sprintMultiplier: 1.8
   accelerationTime: 0.08
@@ -466,6 +467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   backpackSlot: {fileID: 1279848946810242831}
+  baseMaxCapacity: 2
   maxCapacity: 20
   pickupRange: 3
   attractionSpeed: 10

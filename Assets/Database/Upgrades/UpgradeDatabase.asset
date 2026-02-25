@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 678393c7d9ab38842a5175681a679552, type: 3}
+  m_Name: UpgradeDatabase
+  m_EditorClassIdentifier: 
+  upgrades:
+  - upgradeType: 0
+    upgradeName: PlayerCapacity
+    description: 
+    maxLevel: 40
+    baseCost: 350
+    costMultiplier: 1.2
+    baseValue: 2
+    valuePerLevel: 1
+  - upgradeType: 1
+    upgradeName: Speed
+    description: 
+    maxLevel: 25
+    baseCost: 200
+    costMultiplier: 1.2
+    baseValue: 2
+    valuePerLevel: 0.2
+  - upgradeType: 2
+    upgradeName: Vaccum Power
+    description: 
+    maxLevel: 5
+    baseCost: 90
+    costMultiplier: 1.4
+    baseValue: 3
+    valuePerLevel: 0.5
+  - upgradeType: 3
+    upgradeName: Trunk Capacity
+    description: 
+    maxLevel: 30
+    baseCost: 110
+    costMultiplier: 1.2
+    baseValue: 20
+    valuePerLevel: 1
+  - upgradeType: 4
+    upgradeName: Saw Damage
+    description: 
+    maxLevel: 10
+    baseCost: 150
+    costMultiplier: 1.2
+    baseValue: 25
+    valuePerLevel: 1

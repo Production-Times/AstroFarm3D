@@ -5,6 +5,8 @@ public class SmoothPlayerController : MonoBehaviour
 {
     [Header("Movement")]
     [Tooltip("Base walk speed (m/s)")]
+    public float baseMoveSpeed = 5f;
+    [HideInInspector]
     public float moveSpeed = 5f;
     [Tooltip("Multiplier when sprinting")]
     public float sprintMultiplier = 1.8f;
@@ -82,6 +84,28 @@ public class SmoothPlayerController : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         if (cam == null && Camera.main != null) cam = Camera.main.transform;
+        
+        ApplyUpgrade();
+    }
+    
+    public void ApplyUpgrade()
+    {
+        if (Inventory.UpgradeManager.Instance != null && Inventory.UpgradeManager.Instance.upgradeDatabase != null)
+        {
+            float upgradedSpeed = Inventory.UpgradeManager.Instance.GetUpgradeValue(Inventory.UpgradeType.PlayerMoveSpeed);
+            if (upgradedSpeed > 0)
+            {
+                moveSpeed = upgradedSpeed;
+            }
+            else
+            {
+                moveSpeed = baseMoveSpeed;
+            }
+        }
+        else
+        {
+            moveSpeed = baseMoveSpeed;
+        }
     }
 
     void Update()

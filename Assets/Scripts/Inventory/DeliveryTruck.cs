@@ -91,6 +91,7 @@ namespace Inventory
         public UnityEvent onDepartedToDestination;
         public UnityEvent onArrivedAtDestination;
         public UnityEvent<int> onCoinsAwarded;
+        public UnityEvent<int> onCashAwarded;
         
         private List<InventoryItem> cargo = new List<InventoryItem>();
         private Vector3 basePosition;
@@ -438,6 +439,22 @@ namespace Inventory
             if (CoinManager.Instance != null)
             {
                 CoinManager.Instance.AddCoins(totalCoins);
+            }
+            
+            int totalCash = 0;
+            foreach (InventoryItem item in cargo)
+            {
+                if (item != null && item.itemData != null && item.itemData.hasValue)
+                {
+                    totalCash += item.itemData.value;
+                }
+            }
+            
+            if (totalCash > 0 && CashManager.Instance != null)
+            {
+                CashManager.Instance.AddCash(totalCash);
+                onCashAwarded?.Invoke(totalCash);
+                Debug.Log($"[DeliveryTruck] Awarded ${totalCash} cash from {cargo.Count} items");
             }
             
             Debug.Log($"[DeliveryTruck] Awarded {totalCoins} coins ({cargo.Count} items delivered)");

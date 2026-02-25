@@ -1,0 +1,356 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1180093636036413730
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -1036644959745387582, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 02da6d172b7d4524da6542e1271a6f70, type: 2}
+    - target: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_TagString
+      value: Crop
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814140183114437194, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_Name
+      value: redpizza
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814140183114437194, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814140183114437194, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_TagString
+      value: Crop
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -8.648399
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2.023
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -4.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.011401754
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.999935
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -178.693
+      objectReference: {fileID: 0}
+    - target: {fileID: 6147826009795423660, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2881642356805669135}
+    - targetCorrespondingSourceObject: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3945037432328000551}
+    - targetCorrespondingSourceObject: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4186695957541553246}
+    - targetCorrespondingSourceObject: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4260213106030344755}
+  m_SourcePrefab: {fileID: 3150474306388093854, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+--- !u!1 &611671332703798698 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1737720123105463432, guid: 0cfea8d6fee376a4abd8af2803dce2d4, type: 3}
+  m_PrefabInstance: {fileID: 1180093636036413730}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2881642356805669135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611671332703798698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f862f57dfa708eb478db328b8c3bccea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemData: {fileID: 11400000, guid: f2cc9c20e2edc0f469fa40f4fd2fba2e, type: 2}
+  currentState: 0
+  isPlaced: 0
+  isBeingCarried: 0
+  freeState:
+    useGravity: 1
+    isKinematic: 0
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  playerBagAttachedState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  playerCarriedState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  vacuumCapturedState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  tractorUnloadedState:
+    useGravity: 1
+    isKinematic: 0
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  dropPointPlacedState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 1
+    changeLayer: 0
+    targetLayer: Default
+  conveyorBeltProcessingState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  processingMachineLoadingState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  processingMachineProcessingState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  processingMachineUnloadingState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  deliveryPointState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 1
+    changeLayer: 0
+    targetLayer: Default
+  sellingState:
+    useGravity: 0
+    isKinematic: 1
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 0
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  custom1State:
+    useGravity: 1
+    isKinematic: 0
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  custom2State:
+    useGravity: 1
+    isKinematic: 0
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  custom3State:
+    useGravity: 1
+    isKinematic: 0
+    constraints: 0
+    collisionDetection: 0
+    mass: 1
+    drag: 0
+    angularDrag: 0.05
+    collidersEnabled: 1
+    isTrigger: 0
+    changeLayer: 0
+    targetLayer: Default
+  onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3945037432328000551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611671332703798698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e74322002603aa5b9a9bb6ba0e872d9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isCollected: 0
+--- !u!65 &4186695957541553246
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611671332703798698}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7604142, y: 0.25428677, z: 1.0003357}
+  m_Center: {x: -0.0006409584, y: 0.0027542338, z: 0.00020369883}
+--- !u!54 &4260213106030344755
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611671332703798698}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0

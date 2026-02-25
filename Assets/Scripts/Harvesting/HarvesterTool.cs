@@ -13,12 +13,32 @@ namespace Harvesting
         
         [Tooltip("Rotation speed in degrees per second.")]
         public float rotationSpeed = 1080f;
-        [Tooltip("Damage dealt per hit.")]
+        [Tooltip("Base damage dealt per hit.")]
+        public float baseDamagePerHit = 25f;
+        [HideInInspector]
         public float damagePerHit = 25f;
         [Tooltip("Time interval between damage applications.")]
         public float damageInterval = 0.2f;
 
         private System.Collections.Generic.Dictionary<Collider, float> damageTimers = new System.Collections.Generic.Dictionary<Collider, float>();
+        
+        private void Awake()
+        {
+            ApplyUpgrade();
+        }
+        
+        public void ApplyUpgrade()
+        {
+            if (Inventory.UpgradeManager.Instance != null && Inventory.UpgradeManager.Instance.upgradeDatabase != null)
+            {
+                float upgradedDamage = Inventory.UpgradeManager.Instance.GetUpgradeValue(Inventory.UpgradeType.HarvesterDamage);
+                damagePerHit = upgradedDamage > 0 ? upgradedDamage : baseDamagePerHit;
+            }
+            else
+            {
+                damagePerHit = baseDamagePerHit;
+            }
+        }
 
         private void Update()
         {
