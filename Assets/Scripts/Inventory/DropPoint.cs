@@ -25,6 +25,10 @@ namespace Inventory
         public GameObject placementParticlePrefab;
         public Vector3 particleOffset = Vector3.zero;
         
+        [Header("Processing Machine")]
+        [Tooltip("The upgradable processing machine that processes items from this drop point")]
+        public ProcessingMachineUpgrader targetProcessingMachine;
+        
         [Header("Conveyor Belt Processing")]
         public bool sendToConveyorBelt = false;
         public ConveyorBelt targetConveyorBelt;
