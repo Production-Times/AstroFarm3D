@@ -83,6 +83,25 @@ namespace Inventory
         public GameObject loadingEffectPrefab;
         public GameObject arrivalEffectPrefab;
         public Vector3 effectOffset = Vector3.zero;
+
+        [Header("Cash Prefab Stacking")]
+        [Tooltip("Prefab used to visually represent cash (e.g. Cash3D model)")]
+        public GameObject cashPrefab;
+        [Tooltip("Parent/anchor where spawned cash prefabs will be stacked")]
+        public Transform cashStackParent;
+        public StackMode cashStackMode = StackMode.Grid;
+        [Tooltip("Grid dimensions used when stacking cash prefabs in Grid mode")]
+        public Vector2Int cashGridDimensions = new Vector2Int(3, 3);
+        [Tooltip("Spacing between cash prefabs when stacked")]
+        public Vector3 cashItemSpacing = new Vector3(0.5f, 0.2f, 0.5f);
+        [Tooltip("Offset from center for vertical stacking (X,Z)")]
+        public Vector2 cashVerticalOffset = Vector2.zero;
+        [Tooltip("How much cash a single prefab represents (e.g. 10 = one prefab = 10 cash)")]
+        public int cashValuePerPrefab = 10;
+        [Tooltip("Fixed rotation (in Euler angles) applied to all spawned cash prefabs")]
+        public Vector3 cashPrefabRotation = Vector3.zero;
+        [Tooltip("Layer mask for cash to stack on (raycast detection)")]
+        public LayerMask cashLayer = 1; // Default layer 0
         
         [Header("Events")]
         public UnityEvent onArrivedAtDeliveryPoint;
@@ -98,7 +117,6 @@ namespace Inventory
         private Vector3 startPosition;
         private float floatingOffset;
         private TruckState currentState = TruckState.Idle;
-        private float loadingTimer = 0f;
         private Coroutine currentRoutine;
         
         public enum TruckState
@@ -246,13 +264,40 @@ namespace Inventory
                 return tier1RequiredItems;
             }
         }
+
+        private Vector3 GetCashSpawnPosition(int spawnIndex)
+        {
+            // Get grid-based local position
+            Vector3 basePos;
+            if (cashStackMode == StackMode.Vertical)
+            {
+                basePos = new Vector3(cashVerticalOffset.x, spawnIndex * cashItemSpacing.y, cashVerticalOffset.y);
+            }
+            else // Grid mode
+            {
+                int itemsPerLayer = cashGridDimensions.x * cashGridDimensions.y;
+                int layer = spawnIndex / itemsPerLayer;
+                int posInLayer = spawnIndex % itemsPerLayer;
+                
+                int x = posInLayer % cashGridDimensions.x;
+                int z = posInLayer / cashGridDimensions.x;
+                
+                basePos = new Vector3(
+                    x * cashItemSpacing.x - (cashGridDimensions.x * cashItemSpacing.x * 0.5f) + (cashItemSpacing.x * 0.5f),
+                    layer * cashItemSpacing.y,
+                    z * cashItemSpacing.z
+                );
+            }
+
+            // Convert to world position and return (CashPickup handles stacking)
+            return cashStackParent.TransformPoint(basePos);
+        }
         
         private IEnumerator LoadInventory(int targetItemCount)
         {
             currentState = TruckState.Loading;
             onLoadingStarted?.Invoke();
             
-            loadingTimer = 0f;
             int loadedCount = 0;
             
             Debug.Log($"[DeliveryTruck] Starting to load items. Target: {targetItemCount}");
@@ -341,6 +386,29 @@ namespace Inventory
                     x * itemSpacing.x - (gridDimensions.x * itemSpacing.x * 0.5f) + (itemSpacing.x * 0.5f),
                     layer * itemSpacing.y,
                     z * itemSpacing.z
+                );
+            }
+        }
+
+        private Vector3 CalculateCashStackPosition(int index)
+        {
+            if (cashStackMode == StackMode.Vertical)
+            {
+                return new Vector3(cashVerticalOffset.x, index * cashItemSpacing.y, cashVerticalOffset.y);
+            }
+            else // Grid mode
+            {
+                int itemsPerLayer = cashGridDimensions.x * cashGridDimensions.y;
+                int layer = index / itemsPerLayer;
+                int posInLayer = index % itemsPerLayer;
+
+                int x = posInLayer % cashGridDimensions.x;
+                int z = posInLayer / cashGridDimensions.x;
+
+                return new Vector3(
+                    x * cashItemSpacing.x - (cashGridDimensions.x * cashItemSpacing.x * 0.5f) + (cashItemSpacing.x * 0.5f),
+                    layer * cashItemSpacing.y,
+                    z * cashItemSpacing.z
                 );
             }
         }
@@ -450,11 +518,67 @@ namespace Inventory
                 }
             }
             
-            if (totalCash > 0 && CashManager.Instance != null)
+            if (totalCash > 0)
             {
-                CashManager.Instance.AddCash(totalCash);
-                onCashAwarded?.Invoke(totalCash);
-                Debug.Log($"[DeliveryTruck] Awarded ${totalCash} cash from {cargo.Count} items");
+                // Spawn visual cash prefabs based on each item's actual value
+                // Player must collect them to receive the cash
+                if (cashPrefab == null)
+                {
+                    Debug.LogWarning("[DeliveryTruck] cashPrefab not assigned!");
+                }
+                else if (cashStackParent == null)
+                {
+                    Debug.LogWarning("[DeliveryTruck] cashStackParent not assigned! Using truck position as fallback.");
+                    cashStackParent = transform;
+                }
+
+                if (cashPrefab != null && cashStackParent != null && cashValuePerPrefab > 0)
+                {
+                    Debug.Log($"[DeliveryTruck] Cash stack parent: {cashStackParent.name} at world pos {cashStackParent.position}");
+                    int spawnIndex = 0;
+                    
+                    foreach (InventoryItem item in cargo)
+                    {
+                        if (item != null && item.itemData != null && item.itemData.hasValue)
+                        {
+                            // Calculate how many cash prefabs this item's value represents
+                            int itemValue = item.itemData.value;
+                            int preflabsForItem = Mathf.CeilToInt((float)itemValue / (float)cashValuePerPrefab);
+                            preflabsForItem = Mathf.Max(1, preflabsForItem);
+
+                            Debug.Log($"[DeliveryTruck] Item {item.name} value={itemValue}, spawning {preflabsForItem} prefabs");
+
+                            for (int i = 0; i < preflabsForItem; i++)
+                            {
+                                // Use grid-based positioning with raycast stacking
+                                Vector3 spawnPos = GetCashSpawnPosition(spawnIndex);
+                                
+                                GameObject go = Instantiate(cashPrefab, spawnPos, Quaternion.Euler(cashPrefabRotation));
+                                go.transform.SetParent(cashStackParent);
+
+                                // Calculate this prefab's value (remainder goes to last prefab)
+                                int cashValueForThisPrefab = (i == preflabsForItem - 1) 
+                                    ? itemValue - (i * cashValuePerPrefab)
+                                    : cashValuePerPrefab;
+
+                                // Link the item and set direct value
+                                CashPickup pickup = go.GetComponent<CashPickup>();
+                                if (pickup != null)
+                                {
+                                    pickup.SetLinkedItem(item);
+                                    pickup.SetDirectCashValue(cashValueForThisPrefab);
+                                }
+
+                                go.SetActive(true);
+                                Debug.Log($"[DeliveryTruck] Spawned cash #{spawnIndex} at {spawnPos}, value={cashValueForThisPrefab}");
+                                spawnIndex++;
+                            }
+                        }
+                    }
+
+                    onCashAwarded?.Invoke(totalCash);
+                    Debug.Log($"[DeliveryTruck] Spawned ${totalCash} worth of cash prefabs from {cargo.Count} items. Player must collect them!");
+                }
             }
             
             Debug.Log($"[DeliveryTruck] Awarded {totalCoins} coins ({cargo.Count} items delivered)");
@@ -582,6 +706,32 @@ namespace Inventory
                 int required = GetRequiredItemsForDeliveryPoint(deliveryPointCount);
                 UnityEditor.Handles.Label(currentPos + Vector3.up * 3f, 
                     $"State: {currentState}\nDelivery Point: {deliveryPointCount}\nStorage: {storageCount}\nRequired: {required}");
+            }
+
+            // Draw cash stack grid visualization
+            if (cashStackParent != null && cashPrefab != null)
+            {
+                Gizmos.matrix = cashStackParent.localToWorldMatrix;
+                Gizmos.color = new Color(1, 0.84f, 0, 0.3f); // Gold
+
+                for (int i = 0; i < maxCargoCapacity; i++)
+                {
+                    Vector3 localPos = CalculateCashStackPosition(i);
+
+                    if (cashStackMode == StackMode.Vertical)
+                    {
+                        Gizmos.DrawWireCube(localPos, new Vector3(0.2f, cashItemSpacing.y * 0.8f, 0.2f));
+                    }
+                    else
+                    {
+                        Gizmos.DrawWireCube(localPos, cashItemSpacing * 0.8f);
+                    }
+                }
+
+                Gizmos.matrix = Matrix4x4.identity;
+                
+                // Label for cash stack
+                UnityEditor.Handles.Label(cashStackParent.position + Vector3.up * 0.5f, "Cash Stack Area");
             }
         }
     }

@@ -287,14 +287,6 @@ namespace Inventory
                         Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: parented to ConveyorBelt ({conveyorBelt.name})");
                     return false;
                 }
-                
-                ProcessingMachine processingMachine = item.transform.parent.GetComponent<ProcessingMachine>();
-                if (processingMachine != null)
-                {
-                    if (debugPickupChecks)
-                        Debug.Log($"[PlayerBackpack] Cannot pickup {item.name}: parented to ProcessingMachine ({processingMachine.name})");
-                    return false;
-                }
             }
             
             ItemState currentState = item.GetCurrentState();

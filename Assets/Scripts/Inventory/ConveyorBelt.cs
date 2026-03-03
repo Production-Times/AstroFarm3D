@@ -4,6 +4,23 @@ using System.Collections.Generic;
 
 namespace Inventory
 {
+    [System.Serializable]
+    public class ConveyorBeltUpgradeTier
+    {
+        [Header("Tier Info")]
+        public string tierName = "Tier 1";
+        public int upgradeCost = 100;
+        
+        [Header("Tier Stats")]
+        [Range(0.1f, 2f)]
+        [Tooltip("Speed multiplier (lower = faster)")]
+        public float speedMultiplier = 1f;
+        
+        [Header("Model Swap (Optional)")]
+        [Tooltip("Prefab to replace the conveyor with when upgraded (leave null to keep current)")]
+        public GameObject upgradedMachinePrefab;
+    }
+
     public class ConveyorBelt : MonoBehaviour
     {
         [Header("Conveyor Settings")]
@@ -21,12 +38,29 @@ namespace Inventory
         public GameObject processingParticlePrefab;
         public Vector3 particleOffset = Vector3.zero;
         
+        [Header("Upgrade System")]
+        [Tooltip("Enable upgradeable conveyor belt")]
+        public bool upgradeSystemEnabled = true;
+        [Tooltip("Unique ID for saving upgrade progress")]
+        public string machineID = "ConveyorBelt_0";
+        [Tooltip("List of upgrade tiers")]
+        public List<ConveyorBeltUpgradeTier> upgradeTiers = new List<ConveyorBeltUpgradeTier>();
+        
+        [Header("Upgrade Settings")]
+        [Tooltip("Parent transform for spawned upgraded models")]
+        public Transform modelContainer;
+        
         [Header("Events")]
         public UnityEvent<InventoryItem> onItemEntered;
         public UnityEvent<InventoryItem> onItemProcessed;
         public UnityEvent<InventoryItem> onItemExited;
+        public UnityEvent<int> onUpgradePurchased;
+        public UnityEvent onMaxLevelReached;
         
         private List<ConveyorItemData> itemsOnBelt = new List<ConveyorItemData>();
+        
+        private int currentUpgradeLevel = 0;
+        private GameObject spawnedUpgradedModel;
         
         private class ConveyorItemData
         {
@@ -41,6 +75,22 @@ namespace Inventory
             {
                 Debug.LogWarning($"ConveyorBelt on {gameObject.name} is missing start or end point!");
             }
+
+            if (modelContainer == null)
+                modelContainer = transform;
+
+            if (upgradeSystemEnabled)
+            {
+                LoadUpgradeLevel();
+            }
+        }
+
+        private void Start()
+        {
+            if (upgradeSystemEnabled)
+            {
+                ApplyCurrentUpgradeLevel();
+            }
         }
         
         private void Update()
@@ -53,11 +103,15 @@ namespace Inventory
             if (startPoint == null || endPoint == null)
                 return;
             
+            float beltDistance = Vector3.Distance(startPoint.position, endPoint.position);
+            float speedMultiplier = upgradeSystemEnabled ? GetCurrentSpeedMultiplier() : 1f;
+            float effectiveSpeed = conveyorSpeed * speedMultiplier;
+            
             for (int i = itemsOnBelt.Count - 1; i >= 0; i--)
             {
                 ConveyorItemData data = itemsOnBelt[i];
                 
-                data.progress += conveyorSpeed * Time.deltaTime / Vector3.Distance(startPoint.position, endPoint.position);
+                data.progress += effectiveSpeed * Time.deltaTime / beltDistance;
                 
                 if (data.progress >= 0.5f && !data.hasBeenProcessed && processesItems)
                 {
@@ -231,5 +285,124 @@ namespace Inventory
         {
             return itemsOnBelt.Count;
         }
+
+        #region Upgrade System
+
+        private void LoadUpgradeLevel()
+        {
+            currentUpgradeLevel = PlayerPrefs.GetInt($"CB_Level_{machineID}", 0);
+        }
+
+        private void SaveUpgradeLevel()
+        {
+            PlayerPrefs.SetInt($"CB_Level_{machineID}", currentUpgradeLevel);
+            PlayerPrefs.Save();
+        }
+
+        public int GetCurrentUpgradeLevel() => currentUpgradeLevel;
+        public int GetMaxUpgradeLevel() => upgradeTiers.Count;
+        public bool IsMaxLevel() => currentUpgradeLevel >= GetMaxUpgradeLevel();
+
+        public int GetUpgradeCost()
+        {
+            if (!upgradeSystemEnabled || IsMaxLevel()) return 0;
+            
+            int nextLevel = currentUpgradeLevel + 1;
+            if (nextLevel <= 0 || nextLevel > upgradeTiers.Count) return 0;
+            
+            return upgradeTiers[nextLevel - 1].upgradeCost;
+        }
+
+        public float GetCurrentSpeedMultiplier()
+        {
+            if (!upgradeSystemEnabled || currentUpgradeLevel <= 0) return 1f;
+            if (currentUpgradeLevel > upgradeTiers.Count) return 1f;
+            
+            return upgradeTiers[currentUpgradeLevel - 1].speedMultiplier;
+        }
+
+        public bool CanUpgrade()
+        {
+            if (!upgradeSystemEnabled || IsMaxLevel()) return false;
+            
+            int cost = GetUpgradeCost();
+            return CashManager.Instance != null && CashManager.Instance.HasEnoughCash(cost);
+        }
+
+        public bool TryUpgrade()
+        {
+            if (!CanUpgrade()) return false;
+
+            int cost = GetUpgradeCost();
+
+            if (!CashManager.Instance.TrySpendCash(cost)) return false;
+
+            currentUpgradeLevel++;
+            SaveUpgradeLevel();
+
+            ApplyCurrentUpgradeLevel();
+
+            onUpgradePurchased?.Invoke(currentUpgradeLevel);
+
+            if (IsMaxLevel())
+                onMaxLevelReached?.Invoke();
+
+            Debug.Log($"[{machineID}] Upgraded to level {currentUpgradeLevel} for ${cost}");
+            return true;
+        }
+
+        private void ApplyCurrentUpgradeLevel()
+        {
+            if (!upgradeSystemEnabled || currentUpgradeLevel <= 0) return;
+
+            // Swap model if upgrade specifies one
+            SwapUpgradedModel();
+        }
+
+        private void SwapUpgradedModel()
+        {
+            if (currentUpgradeLevel <= 0 || currentUpgradeLevel > upgradeTiers.Count) return;
+
+            ConveyorBeltUpgradeTier tier = upgradeTiers[currentUpgradeLevel - 1];
+
+            if (tier.upgradedMachinePrefab == null) return;
+
+            // Find the upgraded model for this tier (check backwards to get the most recent model)
+            GameObject modelToSpawn = null;
+            for (int i = currentUpgradeLevel - 1; i >= 0; i--)
+            {
+                if (upgradeTiers[i].upgradedMachinePrefab != null)
+                {
+                    modelToSpawn = upgradeTiers[i].upgradedMachinePrefab;
+                    break;
+                }
+            }
+
+            if (modelToSpawn == null) return;
+
+            // Destroy old model if exists
+            if (spawnedUpgradedModel != null)
+                Destroy(spawnedUpgradedModel);
+
+            // Spawn new upgraded model
+            spawnedUpgradedModel = Instantiate(modelToSpawn, modelContainer);
+            spawnedUpgradedModel.name = $"{tier.tierName} Model";
+        }
+
+        public string GetCurrentTierName()
+        {
+            if (!upgradeSystemEnabled || currentUpgradeLevel == 0) return "Base";
+            if (currentUpgradeLevel > upgradeTiers.Count) return "Unknown";
+            
+            return upgradeTiers[currentUpgradeLevel - 1].tierName;
+        }
+
+        public ConveyorBeltUpgradeTier GetCurrentTier()
+        {
+            if (currentUpgradeLevel <= 0 || currentUpgradeLevel > upgradeTiers.Count) return null;
+            return upgradeTiers[currentUpgradeLevel - 1];
+        }
+
+        #endregion
     }
 }

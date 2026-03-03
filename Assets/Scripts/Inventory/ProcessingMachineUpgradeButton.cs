@@ -7,8 +7,8 @@ namespace Inventory
     public class ProcessingMachineUpgradeButton : MonoBehaviour
     {
         [Header("Target")]
-        [Tooltip("The upgrader component on the processing machine")]
-        public ProcessingMachineUpgrader targetUpgrader;
+        [Tooltip("The ConveyorBelt component to upgrade")]
+        public ConveyorBelt targetConveyorBelt;
         
         [Header("UI References")]
         public Button button;
@@ -30,8 +30,8 @@ namespace Inventory
             if (CashManager.Instance != null)
                 CashManager.Instance.onCashChanged.AddListener(_ => Refresh());
             
-            if (targetUpgrader != null)
-                targetUpgrader.onUpgradePurchased.AddListener(_ => Refresh());
+            if (targetConveyorBelt != null)
+                targetConveyorBelt.onUpgradePurchased.AddListener(_ => Refresh());
             
             Refresh();
         }
@@ -44,22 +44,22 @@ namespace Inventory
         
         private void OnClicked()
         {
-            if (targetUpgrader != null)
-                targetUpgrader.TryUpgrade();
+            if (targetConveyorBelt != null)
+                targetConveyorBelt.TryUpgrade();
         }
         
         public void Refresh()
         {
-            if (targetUpgrader == null || targetUpgrader.config == null) return;
+            if (targetConveyorBelt == null) return;
             
-            int level    = targetUpgrader.GetCurrentLevel();
-            int maxLevel = targetUpgrader.GetMaxLevel();
-            bool isMaxed = targetUpgrader.IsMaxLevel();
-            int cost     = targetUpgrader.GetUpgradeCost();
-            bool canAfford = targetUpgrader.CanUpgrade();
+            int level    = targetConveyorBelt.GetCurrentUpgradeLevel();
+            int maxLevel = targetConveyorBelt.GetMaxUpgradeLevel();
+            bool isMaxed = targetConveyorBelt.IsMaxLevel();
+            int cost     = targetConveyorBelt.GetUpgradeCost();
+            bool canAfford = targetConveyorBelt.CanUpgrade();
             
             if (tierNameText != null)
-                tierNameText.text = targetUpgrader.GetTierName();
+                tierNameText.text = targetConveyorBelt.GetCurrentTierName();
             
             if (levelText != null)
                 levelText.text = isMaxed
@@ -72,23 +72,24 @@ namespace Inventory
                 costText.color = canAfford ? Color.white : Color.red;
             }
             
-            if (statsText != null && targetUpgrader.config != null)
+            if (statsText != null && targetConveyorBelt.upgradeSystemEnabled)
             {
+                float speedMult = targetConveyorBelt.GetCurrentSpeedMultiplier();
+                
                 if (isMaxed)
                 {
-                    int cap   = targetUpgrader.config.GetCapacityAtLevel(level);
-                    float spd = targetUpgrader.config.GetProcessingDurationAtLevel(level);
-                    statsText.text = $"Speed: {spd:F1}s  |  Capacity: {cap}";
+                    statsText.text = $"Speed multiplier: {speedMult:F2}x";
                 }
                 else
                 {
-                    int nextLevel   = level + 1;
-                    int capNow      = targetUpgrader.config.GetCapacityAtLevel(level);
-                    int capNext     = targetUpgrader.config.GetCapacityAtLevel(nextLevel);
-                    float spdNow    = targetUpgrader.config.GetProcessingDurationAtLevel(level);
-                    float spdNext   = targetUpgrader.config.GetProcessingDurationAtLevel(nextLevel);
+                    int nextLevel = level + 1;
+                    ConveyorBeltUpgradeTier nextTier = nextLevel <= targetConveyorBelt.upgradeTiers.Count 
+                        ? targetConveyorBelt.upgradeTiers[nextLevel - 1] 
+                        : null;
                     
-                    statsText.text = $"Speed: {spdNow:F1}s → {spdNext:F1}s  |  Capacity: {capNow} → {capNext}";
+                    float nextMult = nextTier != null ? nextTier.speedMultiplier : speedMult;
+                    
+                    statsText.text = $"Speed: {speedMult:F2}x → {nextMult:F2}x";
                 }
             }
             
