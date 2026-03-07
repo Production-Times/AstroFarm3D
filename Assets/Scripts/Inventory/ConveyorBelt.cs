@@ -7,18 +7,29 @@ namespace Inventory
     [System.Serializable]
     public class ConveyorBeltUpgradeTier
     {
-        [Header("Tier Info")]
         public string tierName = "Tier 1";
         public int upgradeCost = 100;
-        
-        [Header("Tier Stats")]
         [Range(0.1f, 2f)]
-        [Tooltip("Speed multiplier (lower = faster)")]
         public float speedMultiplier = 1f;
+    }
+
+    [System.Serializable]
+    public class ProcessingMachineToSpawn
+    {
+        [Tooltip("Machine prefab to spawn when upgrading")]
+        public GameObject machinePrefab;
         
-        [Header("Model Swap (Optional)")]
-        [Tooltip("Prefab to replace the conveyor with when upgraded (leave null to keep current)")]
-        public GameObject upgradedMachinePrefab;
+        [Tooltip("At which upgrade level this machine appears (1 = first upgrade, 2 = second, 3 = third)")]
+        public int spawnAtLevel = 1;
+        
+        [Tooltip("Where to place this machine relative to the conveyor")]
+        public Vector3 position = Vector3.zero;
+        
+        [Tooltip("Rotation of the machine")]
+        public Vector3 rotation = Vector3.zero;
+        
+        [Tooltip("Scale of the machine")]
+        public Vector3 scale = Vector3.one;
     }
 
     public class ConveyorBelt : MonoBehaviour
@@ -39,16 +50,16 @@ namespace Inventory
         public Vector3 particleOffset = Vector3.zero;
         
         [Header("Upgrade System")]
-        [Tooltip("Enable upgradeable conveyor belt")]
         public bool upgradeSystemEnabled = true;
-        [Tooltip("Unique ID for saving upgrade progress")]
         public string machineID = "ConveyorBelt_0";
-        [Tooltip("List of upgrade tiers")]
+        
+        [Header("Upgrade Tiers")]
+        [Tooltip("Add upgrade levels here - each costs more and is faster")]
         public List<ConveyorBeltUpgradeTier> upgradeTiers = new List<ConveyorBeltUpgradeTier>();
         
-        [Header("Upgrade Settings")]
-        [Tooltip("Parent transform for spawned upgraded models")]
-        public Transform modelContainer;
+        [Header("Processing Machines to Add")]
+        [Tooltip("Machines to ADD to conveyor at each upgrade (NOT replacing the belt)")]
+        public List<ProcessingMachineToSpawn> machineSpawnsOnUpgrade = new List<ProcessingMachineToSpawn>();
         
         [Header("Events")]
         public UnityEvent<InventoryItem> onItemEntered;
@@ -60,7 +71,7 @@ namespace Inventory
         private List<ConveyorItemData> itemsOnBelt = new List<ConveyorItemData>();
         
         private int currentUpgradeLevel = 0;
-        private GameObject spawnedUpgradedModel;
+        private List<GameObject> spawnedMachines = new List<GameObject>();
         
         private class ConveyorItemData
         {
@@ -76,12 +87,10 @@ namespace Inventory
                 Debug.LogWarning($"ConveyorBelt on {gameObject.name} is missing start or end point!");
             }
 
-            if (modelContainer == null)
-                modelContainer = transform;
-
             if (upgradeSystemEnabled)
             {
                 LoadUpgradeLevel();
+                Debug.Log($"[{machineID}] Awake - Loaded upgrade level: {currentUpgradeLevel}");
             }
         }
 
@@ -89,6 +98,7 @@ namespace Inventory
         {
             if (upgradeSystemEnabled)
             {
+                Debug.Log($"[{machineID}] Start - Applying current upgrade level ({currentUpgradeLevel})");
                 ApplyCurrentUpgradeLevel();
             }
         }
@@ -291,12 +301,14 @@ namespace Inventory
         private void LoadUpgradeLevel()
         {
             currentUpgradeLevel = PlayerPrefs.GetInt($"CB_Level_{machineID}", 0);
+            Debug.Log($"[{machineID}] LoadUpgradeLevel - Loaded: {currentUpgradeLevel} (Key: CB_Level_{machineID})");
         }
 
         private void SaveUpgradeLevel()
         {
             PlayerPrefs.SetInt($"CB_Level_{machineID}", currentUpgradeLevel);
             PlayerPrefs.Save();
+            Debug.Log($"[{machineID}] SaveUpgradeLevel - Saved: {currentUpgradeLevel} (Key: CB_Level_{machineID})");
         }
 
         public int GetCurrentUpgradeLevel() => currentUpgradeLevel;
@@ -323,70 +335,145 @@ namespace Inventory
 
         public bool CanUpgrade()
         {
-            if (!upgradeSystemEnabled || IsMaxLevel()) return false;
+            if (!upgradeSystemEnabled)
+            {
+                Debug.Log($"[{machineID}] CanUpgrade - FALSE: Upgrade system disabled");
+                return false;
+            }
+            
+            if (IsMaxLevel())
+            {
+                Debug.Log($"[{machineID}] CanUpgrade - FALSE: Already at max level ({currentUpgradeLevel}/{GetMaxUpgradeLevel()})");
+                return false;
+            }
             
             int cost = GetUpgradeCost();
-            return CashManager.Instance != null && CashManager.Instance.HasEnoughCash(cost);
+            
+            if (CashManager.Instance == null)
+            {
+                Debug.LogWarning($"[{machineID}] CanUpgrade - FALSE: CashManager.Instance is NULL");
+                return false;
+            }
+            
+            bool hasEnough = CashManager.Instance.HasEnoughCash(cost);
+            Debug.Log($"[{machineID}] CanUpgrade - {(hasEnough ? "TRUE" : "FALSE")} (Need: ${cost}, Current level: {currentUpgradeLevel})");
+            
+            return hasEnough;
         }
 
         public bool TryUpgrade()
         {
-            if (!CanUpgrade()) return false;
+            if (!CanUpgrade()) 
+            {
+                Debug.LogWarning($"[{machineID}] Cannot upgrade - CanUpgrade returned false");
+                return false;
+            }
 
             int cost = GetUpgradeCost();
 
-            if (!CashManager.Instance.TrySpendCash(cost)) return false;
+            if (!CashManager.Instance.TrySpendCash(cost)) 
+            {
+                Debug.LogWarning($"[{machineID}] Cannot upgrade - TrySpendCash failed");
+                return false;
+            }
 
             currentUpgradeLevel++;
             SaveUpgradeLevel();
+            
+            Debug.Log($"[{machineID}] ✓ UPGRADED TO LEVEL {currentUpgradeLevel} (Cost: ${cost})");
 
             ApplyCurrentUpgradeLevel();
 
             onUpgradePurchased?.Invoke(currentUpgradeLevel);
 
             if (IsMaxLevel())
+            {
+                Debug.Log($"[{machineID}] ★ MAX LEVEL REACHED!");
                 onMaxLevelReached?.Invoke();
+            }
 
-            Debug.Log($"[{machineID}] Upgraded to level {currentUpgradeLevel} for ${cost}");
             return true;
         }
 
         private void ApplyCurrentUpgradeLevel()
         {
-            if (!upgradeSystemEnabled || currentUpgradeLevel <= 0) return;
-
-            // Swap model if upgrade specifies one
-            SwapUpgradedModel();
-        }
-
-        private void SwapUpgradedModel()
-        {
-            if (currentUpgradeLevel <= 0 || currentUpgradeLevel > upgradeTiers.Count) return;
-
-            ConveyorBeltUpgradeTier tier = upgradeTiers[currentUpgradeLevel - 1];
-
-            if (tier.upgradedMachinePrefab == null) return;
-
-            // Find the upgraded model for this tier (check backwards to get the most recent model)
-            GameObject modelToSpawn = null;
-            for (int i = currentUpgradeLevel - 1; i >= 0; i--)
+            if (!upgradeSystemEnabled)
             {
-                if (upgradeTiers[i].upgradedMachinePrefab != null)
-                {
-                    modelToSpawn = upgradeTiers[i].upgradedMachinePrefab;
-                    break;
-                }
+                Debug.LogWarning($"[{machineID}] ApplyCurrentUpgradeLevel - Upgrade system disabled!");
+                return;
             }
 
-            if (modelToSpawn == null) return;
+            if (currentUpgradeLevel <= 0)
+            {
+                Debug.Log($"[{machineID}] ApplyCurrentUpgradeLevel - At base level (0), no machines to spawn");
+                return;
+            }
 
-            // Destroy old model if exists
-            if (spawnedUpgradedModel != null)
-                Destroy(spawnedUpgradedModel);
+            Debug.Log($"[{machineID}] ApplyCurrentUpgradeLevel - At level {currentUpgradeLevel}, attempting to spawn machines...");
+            SpawnProcessingMachines();
+        }
 
-            // Spawn new upgraded model
-            spawnedUpgradedModel = Instantiate(modelToSpawn, modelContainer);
-            spawnedUpgradedModel.name = $"{tier.tierName} Model";
+        private void SpawnProcessingMachines()
+        {
+            Debug.Log($"[{machineID}] SpawnProcessingMachines() called - Current Level: {currentUpgradeLevel}");
+            Debug.Log($"[{machineID}] Total machines in config: {machineSpawnsOnUpgrade.Count}");
+
+            if (machineSpawnsOnUpgrade.Count == 0)
+            {
+                Debug.LogWarning($"[{machineID}] No machines configured in 'Machines to Add on Upgrade' list!");
+                return;
+            }
+
+            // Spawn machines based on upgrade level
+            foreach (var machineConfig in machineSpawnsOnUpgrade)
+            {
+                Debug.Log($"[{machineID}] Checking machine... SpawnAtLevel: {machineConfig.spawnAtLevel}, Prefab: {(machineConfig.machinePrefab != null ? machineConfig.machinePrefab.name : "NULL")}");
+
+                // Only spawn if we're at or past the required level
+                if (currentUpgradeLevel >= machineConfig.spawnAtLevel)
+                {
+                    Debug.Log($"[{machineID}] ✓ Level {currentUpgradeLevel} >= Required {machineConfig.spawnAtLevel} - SHOULD SPAWN");
+
+                    // Check if already spawned
+                    bool alreadySpawned = false;
+                    foreach (var spawnedMachine in spawnedMachines)
+                    {
+                        if (spawnedMachine != null && spawnedMachine.name.Contains(machineConfig.machinePrefab.name))
+                        {
+                            alreadySpawned = true;
+                            Debug.Log($"[{machineID}] Already spawned: {spawnedMachine.name}");
+                            break;
+                        }
+                    }
+
+                    // Spawn if not already present
+                    if (!alreadySpawned && machineConfig.machinePrefab != null)
+                    {
+                        Debug.Log($"[{machineID}] ★ SPAWNING MACHINE: {machineConfig.machinePrefab.name}");
+                        
+                        GameObject spawnedMachine = Instantiate(
+                            machineConfig.machinePrefab,
+                            transform
+                        );
+
+                        spawnedMachine.transform.localPosition = machineConfig.position;
+                        spawnedMachine.transform.localRotation = Quaternion.Euler(machineConfig.rotation);
+                        spawnedMachine.transform.localScale = machineConfig.scale;
+
+                        spawnedMachines.Add(spawnedMachine);
+                        
+                        Debug.Log($"[{machineID}] ✓ Successfully spawned: {spawnedMachine.name} at position {machineConfig.position}");
+                    }
+                    else if (machineConfig.machinePrefab == null)
+                    {
+                        Debug.LogError($"[{machineID}] Cannot spawn - Machine prefab is NULL at spawn level {machineConfig.spawnAtLevel}");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"[{machineID}] ✗ Level {currentUpgradeLevel} < Required {machineConfig.spawnAtLevel} - NOT YET");
+                }
+            }
         }
 
         public string GetCurrentTierName()

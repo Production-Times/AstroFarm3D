@@ -14,6 +14,9 @@ public class MobileJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     [Tooltip("Small dead zone to ignore tiny touches")]
     public float deadZone = 0.1f;
 
+    [Header("UI Button Safety")]
+    [SerializeField] private UIButtonTouchManager buttonTouchManager;
+
     Vector2 input = Vector2.zero;
 
     void Start()
@@ -21,15 +24,26 @@ public class MobileJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHand
         if (background == null) background = GetComponent<RectTransform>();
         if (handle == null && background.childCount > 0) handle = background.GetChild(0) as RectTransform;
         if (handle == null) Debug.LogWarning("MobileJoystick: handle not assigned and no child found.", this);
+
+        if (buttonTouchManager == null)
+            buttonTouchManager = FindObjectOfType<UIButtonTouchManager>();
     }
 
     public virtual void OnPointerDown(PointerEventData eventData)
     {
+        // Ignore if pointer is over a UI button
+        if (buttonTouchManager != null && buttonTouchManager.ShouldIgnoreJoystickInput())
+            return;
+
         OnDrag(eventData);
     }
 
     public virtual void OnDrag(PointerEventData eventData)
     {
+        // Ignore if pointer is over a UI button
+        if (buttonTouchManager != null && buttonTouchManager.ShouldIgnoreJoystickInput())
+            return;
+
         if (background == null) return;
 
         Vector2 localPoint;

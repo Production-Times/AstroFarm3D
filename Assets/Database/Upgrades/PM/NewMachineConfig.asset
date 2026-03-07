@@ -26,3 +26,11 @@ MonoBehaviour:
     modelLocalPosition: {x: -29.93, y: -1.51, z: -11.41}
     modelLocalRotationQuat: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
     modelLocalScale: {x: 2.7, y: 2.7, z: 2.7}
+  - tierName: Tier 2
+    upgradeCost: 200
+    speedMultiplier: 0.9
+    maxCapacity: 2
+    modelPrefab: {fileID: 0}
+    modelLocalPosition: {x: 0, y: 0, z: 0}
+    modelLocalRotationQuat: {x: 0, y: 0, z: 0, w: 1}
+    modelLocalScale: {x: 1, y: 1, z: 1}

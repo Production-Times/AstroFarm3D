@@ -78,18 +78,16 @@ namespace Inventory
                 
                 if (isMaxed)
                 {
-                    statsText.text = $"Speed multiplier: {speedMult:F2}x";
+                    statsText.text = $"{speedMult:F2}x";
                 }
                 else
                 {
                     int nextLevel = level + 1;
-                    ConveyorBeltUpgradeTier nextTier = nextLevel <= targetConveyorBelt.upgradeTiers.Count 
-                        ? targetConveyorBelt.upgradeTiers[nextLevel - 1] 
-                        : null;
+                    float nextMult = nextLevel <= targetConveyorBelt.upgradeTiers.Count 
+                        ? targetConveyorBelt.upgradeTiers[nextLevel - 1].speedMultiplier 
+                        : speedMult;
                     
-                    float nextMult = nextTier != null ? nextTier.speedMultiplier : speedMult;
-                    
-                    statsText.text = $"Speed: {speedMult:F2}x → {nextMult:F2}x";
+                    statsText.text = $"{speedMult:F2}x → {nextMult:F2}x";
                 }
             }
             

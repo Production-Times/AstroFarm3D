@@ -5,6 +5,7 @@ using System.Collections;
 /// <summary>
 /// Dynamic joystick that fades out after idle timeout.
 /// Works with DynamicJoystickSpawner for robust pooled spawning.
+/// Immune to UI button touches via UIButtonTouchManager.
 /// </summary>
 public class DynamicJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
@@ -16,6 +17,9 @@ public class DynamicJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     public float handleRange = 60f;
     [Tooltip("Small dead zone to ignore tiny touches")]
     public float deadZone = 0.1f;
+
+    [Header("UI Button Safety")]
+    [SerializeField] private UIButtonTouchManager buttonTouchManager;
 
     // Input state
     Vector2 input = Vector2.zero;
@@ -47,6 +51,9 @@ public class DynamicJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHan
         if (handle == null && background.childCount > 0) handle = background.GetChild(0) as RectTransform;
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+        if (buttonTouchManager == null)
+            buttonTouchManager = FindObjectOfType<UIButtonTouchManager>();
     }
 
     void Update()
@@ -78,6 +85,10 @@ public class DynamicJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHan
     // Public API so external spawner can forward pointer events (screen space)
     public void ProcessPointerDown(Vector2 screenPosition, Camera uiCamera)
     {
+        // Ignore if pointer is over a UI button
+        if (buttonTouchManager != null && buttonTouchManager.ShouldIgnoreJoystickInput())
+            return;
+
         isPressed = true;
         ResetIdleTimer();
         // fallthrough to drag logic to position the handle
@@ -86,6 +97,10 @@ public class DynamicJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHan
 
     public void ProcessPointerDrag(Vector2 screenPosition, Camera uiCamera)
     {
+        // Ignore if pointer is over a UI button
+        if (buttonTouchManager != null && buttonTouchManager.ShouldIgnoreJoystickInput())
+            return;
+
         if (background == null) return;
 
         Vector2 localPoint;

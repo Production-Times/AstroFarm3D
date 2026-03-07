@@ -36,6 +36,9 @@ public class DynamicJoystickSpawner : MonoBehaviour, IPointerDownHandler, IPoint
     [Tooltip("Initial pool size.")]
     public int initialPoolSize = 2;
 
+    [Header("UI Button Safety")]
+    [SerializeField] private UIButtonTouchManager buttonTouchManager;
+
     // Active joystick instance
     DynamicJoystick activeJoystick;
     // Public accessor so other scripts (e.g. player) can read the runtime joystick instance
@@ -51,6 +54,10 @@ public class DynamicJoystickSpawner : MonoBehaviour, IPointerDownHandler, IPoint
     {
         if (canvas == null) canvas = GetComponentInParent<Canvas>();
         if (joystickPrefab == null) Debug.LogError("DynamicJoystickSpawner: joystickPrefab not assigned!", this);
+        
+        if (buttonTouchManager == null)
+            buttonTouchManager = FindObjectOfType<UIButtonTouchManager>();
+
         bool isPlaying = Application.isPlaying;
         if (touchDetectionImage == null)
         {
@@ -170,6 +177,10 @@ public class DynamicJoystickSpawner : MonoBehaviour, IPointerDownHandler, IPoint
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        // Ignore if pointer is over a UI button
+        if (buttonTouchManager != null && buttonTouchManager.ShouldIgnoreJoystickInput())
+            return;
+
         // Check distance from last spawn—if too far, spawn new joystick
         if (activeJoystick != null && Vector2.Distance(eventData.position, lastTouchPos) < respawnDistance)
         {
@@ -192,6 +203,10 @@ public class DynamicJoystickSpawner : MonoBehaviour, IPointerDownHandler, IPoint
 
     public void OnDrag(PointerEventData eventData)
     {
+        // Ignore if pointer is over a UI button
+        if (buttonTouchManager != null && buttonTouchManager.ShouldIgnoreJoystickInput())
+            return;
+
         if (activeJoystick == null) return;
 
         Canvas canvasToUse = canvas != null ? canvas : GetComponentInParent<Canvas>();

@@ -9,6 +9,7 @@ TagManager:
   - Crops
   - Crop
   - Money
+  - Button
   layers:
   - Default
   - TransparentFX
